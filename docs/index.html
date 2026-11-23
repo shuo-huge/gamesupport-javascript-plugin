@@ -1,0 +1,2725 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GameSupport 插件开发</title>
+<meta name="description" content="从零编写、构建、调试和分发 GameSupport JavaScript 插件的完整开发文档。">
+<meta property="og:title" content="GameSupport 插件开发">
+<meta property="og:description" content="从零编写、构建、调试和分发 GameSupport JavaScript 插件的完整开发文档。">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Noto+Sans+SC:wght@400;500;700&amp;display=swap">
+<style>
+/* ── Design plan ──────────────────────────────────────────────────────────
+   Palette: cool paper + deep teal signal, copper for warnings, console-navy code.
+   Type:    IBM Plex Sans (Latin) + Noto Sans SC (CJK), IBM Plex Mono for data.
+   Layout:  sticky docs sidebar · centered reading column · on-this-page rail.
+   ──────────────────────────────────────────────────────────────────────── */
+:root {
+  color-scheme: light;
+  --bg: #f2f6f8;
+  --surface: #ffffff;
+  --surface-2: #eaf0f4;
+  --surface-3: #dde7ed;
+  --fg: #17242d;
+  --fg-strong: #09151c;
+  --muted: #586b7a;
+  --faint: #7f919e;
+  --line: #d3dfe6;
+  --line-strong: #b5c7d2;
+  --accent: #0a6b62;
+  --accent-strong: #064d47;
+  --accent-soft: #d5efe9;
+  --accent-contrast: #ffffff;
+  --signal: #9a530b;
+  --signal-soft: #fbefdf;
+  --danger: #a0342c;
+  --danger-soft: #fbe9e6;
+  --ok: #1c6b45;
+  --ok-soft: #dcefe4;
+  --note-bg: #edf7f4;
+  --warn-bg: #fcf4e8;
+  --danger-bg: #fbeceb;
+  --code-bg: #0b171d;
+  --code-bg-2: #102129;
+  --code-fg: #d4e4e9;
+  --code-muted: #78909c;
+  --code-line: #1c333d;
+  --code-key: #9ecbe8;
+  --code-str: #7fd1b9;
+  --code-num: #f0b37e;
+  --code-keyword: #96b8ff;
+  --code-comment: #6d8794;
+  --code-title: #ffd479;
+  --header-bg: rgba(242, 246, 248, .96);
+  --scrim: rgba(7, 20, 27, .48);
+  --shadow: 0 1px 2px rgba(8, 30, 38, .05), 0 16px 40px -28px rgba(8, 30, 38, .35);
+  --shadow-lg: 0 24px 70px -30px rgba(8, 30, 38, .45);
+  --radius: 14px;
+  --radius-sm: 9px;
+  --font-sans: "IBM Plex Sans", "Noto Sans SC", "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  --maxw: 1560px;
+  --header-h: 64px;
+  --sidebar-w: 272px;
+  --toc-w: 216px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0a1218;
+    --surface: #101c24;
+    --surface-2: #16252e;
+    --surface-3: #1c2e38;
+    --fg: #d6e2e8;
+    --fg-strong: #f0f6f8;
+    --muted: #93a7b3;
+    --faint: #6d838f;
+    --line: #22343e;
+    --line-strong: #334a55;
+    --accent: #50d1c1;
+    --accent-strong: #7ce3d4;
+    --accent-soft: #10322f;
+    --accent-contrast: #04201d;
+    --signal: #f0b35c;
+    --signal-soft: #2d2416;
+    --danger: #f08b82;
+    --danger-soft: #331b19;
+    --ok: #6fd39d;
+    --ok-soft: #13291e;
+    --note-bg: #0e2525;
+    --warn-bg: #292114;
+    --danger-bg: #2b1918;
+    --code-bg: #071219;
+    --code-bg-2: #0c1b22;
+    --code-fg: #d4e4e9;
+    --code-muted: #78909c;
+    --code-line: #1a2d36;
+    --header-bg: rgba(10, 18, 24, .96);
+    --scrim: rgba(0, 0, 0, .58);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 18px 44px -28px rgba(0, 0, 0, .75);
+    --shadow-lg: 0 28px 80px -30px rgba(0, 0, 0, .85);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0a1218;
+  --surface: #101c24;
+  --surface-2: #16252e;
+  --surface-3: #1c2e38;
+  --fg: #d6e2e8;
+  --fg-strong: #f0f6f8;
+  --muted: #93a7b3;
+  --faint: #6d838f;
+  --line: #22343e;
+  --line-strong: #334a55;
+  --accent: #50d1c1;
+  --accent-strong: #7ce3d4;
+  --accent-soft: #10322f;
+  --accent-contrast: #04201d;
+  --signal: #f0b35c;
+  --signal-soft: #2d2416;
+  --danger: #f08b82;
+  --danger-soft: #331b19;
+  --ok: #6fd39d;
+  --ok-soft: #13291e;
+  --note-bg: #0e2525;
+  --warn-bg: #292114;
+  --danger-bg: #2b1918;
+  --code-bg: #071219;
+  --code-bg-2: #0c1b22;
+  --code-fg: #d4e4e9;
+  --code-muted: #78909c;
+  --code-line: #1a2d36;
+  --header-bg: rgba(10, 18, 24, .96);
+  --scrim: rgba(0, 0, 0, .58);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 18px 44px -28px rgba(0, 0, 0, .75);
+  --shadow-lg: 0 28px 80px -30px rgba(0, 0, 0, .85);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--header-bg);
+  z-index: 40;
+}
+::selection { background: var(--accent-soft); color: var(--fg-strong); }
+a { color: var(--accent-strong); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { color: var(--accent); }
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }
+img, svg { max-width: 100%; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.skip-link {
+  position: fixed; left: 16px; top: -80px; z-index: 200;
+  padding: .6rem .9rem; background: var(--surface); color: var(--fg-strong);
+  border: 1px solid var(--line-strong); border-radius: 8px; box-shadow: var(--shadow);
+  transition: top .18s ease;
+}
+.skip-link:focus { top: 12px; }
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.topbar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 30;
+  background: var(--header-bg);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+.topbar-inner {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  min-height: var(--header-h);
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.progress-track { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; pointer-events: none; }
+#progressBar { height: 100%; width: 0; background: var(--accent); transition: width .08s linear; }
+.brand {
+  display: inline-flex; align-items: center; gap: .65rem;
+  color: var(--fg-strong); text-decoration: none; font-weight: 600;
+  letter-spacing: -.015em; white-space: nowrap;
+}
+.brand:hover { color: var(--fg-strong); }
+.brand-mark {
+  display: grid; place-items: center; width: 32px; height: 32px;
+  border-radius: 9px; background: var(--accent); color: var(--accent-contrast);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+  flex: 0 0 auto;
+}
+.brand-mark svg { width: 19px; height: 19px; }
+.brand-divider { color: var(--line-strong); font-weight: 400; margin-inline: .1rem; }
+.brand-sub { color: var(--muted); font-weight: 500; font-size: .9rem; }
+.topbar-spacer { flex: 1 1 auto; }
+.search-trigger, .icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--line); background: var(--surface-2); color: var(--muted);
+  border-radius: var(--radius-sm); transition: background .16s ease, color .16s ease, border-color .16s ease;
+}
+.search-trigger { gap: .5rem; padding: .42rem .62rem; font-size: .82rem; }
+.search-trigger svg { width: 16px; height: 16px; flex: 0 0 auto; }
+.search-trigger kbd { margin-left: .15rem; }
+.search-trigger:hover, .icon-btn:hover { background: var(--surface-3); color: var(--fg); border-color: var(--line-strong); }
+.icon-btn { width: 36px; height: 36px; padding: 0; text-decoration: none; }
+.icon-btn svg { width: 18px; height: 18px; }
+kbd {
+  font-family: var(--font-mono); font-size: .66rem; line-height: 1.4;
+  padding: .08rem .32rem; border: 1px solid var(--line-strong);
+  border-radius: 4px; background: var(--surface); color: var(--muted);
+}
+.nav-toggle { display: none; }
+.theme-toggle .theme-icon { display: none; }
+.theme-toggle[data-mode="system"] .theme-icon.system,
+.theme-toggle[data-mode="light"] .theme-icon.light,
+.theme-toggle[data-mode="dark"] .theme-icon.dark { display: block; }
+
+/* ── Layout ─────────────────────────────────────────────────────────────── */
+.layout {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr) var(--toc-w);
+  align-items: start;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.main { min-width: 0; }
+.content {
+  width: 100%;
+  max-width: 900px;
+  margin-inline: auto;
+  padding: 34px 44px 96px;
+}
+.sidebar {
+  position: sticky;
+  top: calc(var(--header-h) + env(safe-area-inset-top, 0px) + 18px);
+  max-height: calc(100vh - var(--header-h) - env(safe-area-inset-top, 0px) - 36px);
+  overflow-y: auto;
+  padding: 30px 16px 40px 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+.sidebar-mobile-head { display: none; }
+.nav-group { margin-bottom: 1.55rem; }
+.nav-label {
+  margin: 0 0 .38rem; padding-inline: .72rem;
+  font-family: var(--font-mono); font-size: .66rem; font-weight: 500;
+  letter-spacing: .13em; text-transform: uppercase; color: var(--faint);
+}
+.nav-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.nav-link {
+  display: block; padding: .42rem .72rem; border-radius: 7px;
+  color: var(--muted); text-decoration: none; font-size: .865rem; line-height: 1.45;
+  border-left: 2px solid transparent;
+}
+.nav-link:hover { background: var(--surface-2); color: var(--fg); text-decoration: none; }
+.nav-link.active {
+  background: var(--accent-soft); color: var(--accent-strong);
+  font-weight: 500; border-left-color: var(--accent);
+}
+.sidebar-foot {
+  display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+  padding: .8rem .72rem 0; margin-top: .4rem; border-top: 1px solid var(--line);
+  color: var(--faint); font-family: var(--font-mono); font-size: .68rem;
+}
+.badge {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .16rem .48rem; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent-strong);
+  font-family: var(--font-mono); font-size: .66rem; font-weight: 500; letter-spacing: .02em;
+}
+.toc {
+  position: sticky;
+  top: calc(var(--header-h) + env(safe-area-inset-top, 0px) + 18px);
+  max-height: calc(100vh - var(--header-h) - env(safe-area-inset-top, 0px) - 36px);
+  overflow-y: auto;
+  padding: 32px 0 40px 18px;
+  scrollbar-width: thin;
+}
+.toc-title {
+  margin: 0 0 .6rem; padding-left: .8rem;
+  font-family: var(--font-mono); font-size: .66rem; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--faint);
+}
+#tocList { display: grid; gap: 1px; }
+#tocList a {
+  display: block; padding: .28rem 0 .28rem .8rem;
+  border-left: 2px solid var(--line);
+  color: var(--muted); text-decoration: none; font-size: .79rem; line-height: 1.45;
+}
+#tocList a:hover { color: var(--fg); border-left-color: var(--line-strong); text-decoration: none; }
+#tocList a.active { color: var(--accent-strong); border-left-color: var(--accent); font-weight: 500; }
+.scrim {
+  position: fixed; inset: 0; z-index: 50; background: var(--scrim);
+  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+}
+
+/* ── Hero ───────────────────────────────────────────────────────────────── */
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+  gap: clamp(2rem, 4vw, 3.5rem);
+  align-items: center;
+  padding: .4rem 0 2.2rem;
+}
+.eyebrow {
+  display: inline-flex; align-items: center; gap: .5rem;
+  font-family: var(--font-mono); font-size: .7rem; font-weight: 500;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--accent-strong);
+  margin-bottom: 1rem;
+}
+.eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.hero h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(2.15rem, 4.3vw, 3.45rem);
+  line-height: 1.12;
+  letter-spacing: -.035em;
+  font-weight: 700;
+  color: var(--fg-strong);
+  text-wrap: balance;
+}
+.hero-lead {
+  margin: 0 0 1.4rem;
+  max-width: 31rem;
+  color: var(--muted);
+  font-size: 1.04rem;
+  line-height: 1.8;
+}
+.hero-actions { display: flex; flex-wrap: wrap; gap: .7rem; margin-bottom: 1.35rem; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .45rem;
+  padding: .58rem .95rem; border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--fg);
+  font-size: .875rem; font-weight: 500; text-decoration: none; line-height: 1.3;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease;
+}
+.btn:hover { background: var(--surface-2); text-decoration: none; border-color: var(--accent); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+.btn-primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); color: var(--accent-contrast); }
+.btn svg { width: 16px; height: 16px; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: .4rem; }
+.hero-meta span {
+  padding: .18rem .5rem; border: 1px solid var(--line); border-radius: 5px;
+  background: var(--surface); color: var(--muted);
+  font-family: var(--font-mono); font-size: .67rem; letter-spacing: .01em;
+}
+.console {
+  background: var(--code-bg);
+  border: 1px solid var(--code-line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  transform: translateZ(0);
+}
+.console-bar {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .62rem .85rem; background: var(--code-bg-2);
+  border-bottom: 1px solid var(--code-line);
+  color: var(--code-muted); font-family: var(--font-mono); font-size: .68rem;
+  letter-spacing: .04em;
+}
+.console-dots { display: inline-flex; gap: 5px; margin-right: .2rem; }
+.console-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--code-line); display: block; }
+.console-dots i:first-child { background: #e07a6e; }
+.console-dots i:nth-child(2) { background: #e2b05e; }
+.console-dots i:nth-child(3) { background: #66b98a; }
+.console-live { margin-left: auto; display: inline-flex; align-items: center; gap: .3rem; }
+.console-live::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #66b98a; }
+.console-body { padding: .75rem 0 .85rem; }
+.console-line {
+  display: grid; grid-template-columns: 3.25rem .8rem minmax(0, 1fr);
+  align-items: baseline; gap: .35rem;
+  padding: .2rem .9rem;
+  font-family: var(--font-mono); font-size: .67rem; line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.console-line .lane { font-size: .6rem; letter-spacing: .03em; text-align: right; white-space: nowrap; }
+.console-line .lane.plugin { color: #7fd1b9; }
+.console-line .lane.host { color: #f0b35c; }
+.console-line .dir { color: #49636f; text-align: center; }
+.console-line code { color: var(--code-fg); }
+.console .console-line code {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  color: var(--code-fg);
+  font-size: inherit;
+  overflow-wrap: anywhere;
+}
+.c-key { color: var(--code-key); }
+.c-str { color: var(--code-str); }
+.c-num { color: var(--code-num); }
+.c-dim { color: var(--code-comment); }
+.console-line.break { min-width: 0; padding-top: .5rem; padding-bottom: .1rem; }
+.console-line.break span { grid-column: 1 / -1; color: var(--code-comment); font-size: .62rem; letter-spacing: .08em; }
+
+.stats {
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1px; background: var(--line);
+  border: 1px solid var(--line); border-radius: var(--radius);
+  overflow: hidden; margin-bottom: 2.4rem;
+}
+.stat { background: var(--surface); padding: .9rem 1rem; }
+.stat strong {
+  display: block; color: var(--fg-strong);
+  font-family: var(--font-mono); font-size: 1.18rem; font-weight: 600;
+  letter-spacing: -.03em; line-height: 1.3; font-variant-numeric: tabular-nums;
+}
+.stat span { display: block; margin-top: .12rem; color: var(--muted); font-size: .71rem; line-height: 1.4; }
+
+/* ── Sections & prose ───────────────────────────────────────────────────── */
+.doc-section {
+  scroll-margin-top: calc(var(--header-h) + env(safe-area-inset-top, 0px) + 24px);
+  padding-top: 1rem;
+}
+.doc-section + .doc-section {
+  margin-top: 3.1rem; padding-top: 3.1rem; border-top: 1px solid var(--line);
+}
+.section-eyebrow {
+  display: flex; align-items: center; gap: .55rem;
+  margin-bottom: .65rem;
+  font-family: var(--font-mono); font-size: .67rem; font-weight: 500;
+  letter-spacing: .13em; text-transform: uppercase; color: var(--accent-strong);
+}
+.section-eyebrow::after { content: ""; height: 1px; flex: 1 1 auto; background: var(--line); }
+h1, h2, h3, h4 { color: var(--fg-strong); }
+h2 {
+  margin: 0 0 .85rem;
+  font-size: clamp(1.5rem, 2.6vw, 2.02rem);
+  line-height: 1.27; letter-spacing: -.025em; font-weight: 650;
+  text-wrap: balance; scroll-margin-top: calc(var(--header-h) + 28px);
+}
+h3 {
+  margin: 2rem 0 .6rem;
+  font-size: 1.08rem; line-height: 1.4; letter-spacing: -.012em; font-weight: 600;
+  scroll-margin-top: calc(var(--header-h) + 28px);
+}
+h4 { margin: 1.45rem 0 .45rem; font-size: .96rem; font-weight: 600; }
+p { margin: 0 0 1rem; max-width: 74ch; }
+.lead { font-size: 1.03rem; color: var(--muted); line-height: 1.8; max-width: 68ch; }
+.mono { font-family: var(--font-mono); }
+.muted { color: var(--muted); }
+.small { font-size: .82rem; }
+.anchor {
+  margin-left: .4rem; color: var(--faint); text-decoration: none;
+  font-weight: 400; opacity: 0; transition: opacity .15s ease;
+}
+h2:hover .anchor, .anchor:focus-visible { opacity: 1; }
+.anchor:hover { color: var(--accent); text-decoration: none; }
+.prose ul, .prose ol { margin: 0 0 1.1rem; padding-left: 1.2rem; }
+.prose li { margin-bottom: .38rem; padding-left: .1rem; max-width: 72ch; }
+.prose li::marker { color: var(--accent); }
+.prose strong, .prose b { color: var(--fg-strong); font-weight: 600; }
+.prose a { font-weight: 500; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
+:not(pre) > code {
+  font-family: var(--font-mono); font-size: .855em;
+  padding: .1em .36em; border-radius: 5px;
+  background: var(--surface-2); border: 1px solid var(--line);
+  color: var(--accent-strong); overflow-wrap: anywhere;
+}
+figure { margin: 1.4rem 0; }
+figcaption { margin-top: .55rem; color: var(--faint); font-size: .76rem; text-align: center; }
+
+/* ── Code blocks ────────────────────────────────────────────────────────── */
+.codeblock {
+  margin: 1.25rem 0;
+  background: var(--code-bg);
+  border: 1px solid var(--code-line);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.codeblock-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: .5rem .8rem .5rem .95rem;
+  background: var(--code-bg-2);
+  border-bottom: 1px solid var(--code-line);
+}
+.codeblock-title {
+  font-family: var(--font-mono); font-size: .67rem; font-weight: 500;
+  letter-spacing: .05em; color: var(--code-muted); text-transform: uppercase;
+}
+.copy-btn {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .22rem .48rem; border-radius: 5px;
+  border: 1px solid var(--code-line); background: transparent;
+  color: var(--code-muted); font-family: var(--font-mono); font-size: .64rem;
+  transition: color .15s ease, border-color .15s ease, background .15s ease;
+}
+.copy-btn:hover { color: var(--code-fg); border-color: #37545f; background: rgba(255,255,255,.04); }
+.copy-btn.done { color: #7fd1b9; border-color: #2c6a58; }
+.codeblock pre { margin: 0; padding: .95rem 1.05rem 1.05rem; overflow-x: auto; }
+.codeblock code {
+  display: block; min-width: max-content;
+  font-family: var(--font-mono); font-size: .815rem; line-height: 1.72;
+  color: var(--code-fg); tab-size: 2;
+}
+.codeblock pre::-webkit-scrollbar { height: 9px; }
+.codeblock pre::-webkit-scrollbar-thumb { background: #29434e; border-radius: 8px; }
+.codeblock pre::-webkit-scrollbar-track { background: transparent; }
+.hljs-comment, .hljs-quote { color: var(--code-comment); font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-section, .hljs-link { color: var(--code-keyword); }
+.hljs-string, .hljs-regexp, .hljs-addition, .hljs-attribute { color: var(--code-str); }
+.hljs-number, .hljs-symbol, .hljs-bullet, .hljs-variable, .hljs-template-variable { color: var(--code-num); }
+.hljs-title, .hljs-title.function_, .hljs-title.class_ { color: var(--code-title); }
+.hljs-attr, .hljs-property, .hljs-name, .hljs-selector-id, .hljs-selector-class { color: var(--code-key); }
+.hljs-built_in, .hljs-type, .hljs-params { color: #c9b8ff; }
+.hljs-meta { color: var(--code-comment); }
+.hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: 600; }
+
+/* ── Tables ─────────────────────────────────────────────────────────────── */
+.table-wrap {
+  margin: 1.2rem 0;
+  border: 1px solid var(--line); border-radius: 12px;
+  background: var(--surface); overflow-x: auto;
+  box-shadow: var(--shadow);
+}
+table { width: 100%; border-collapse: collapse; min-width: 560px; font-size: .875rem; }
+th {
+  padding: .66rem .9rem; text-align: left; vertical-align: bottom;
+  background: var(--surface-2); color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-mono); font-size: .66rem; font-weight: 500;
+  letter-spacing: .07em; text-transform: uppercase; white-space: nowrap;
+}
+td { padding: .72rem .9rem; border-bottom: 1px solid var(--line); vertical-align: top; line-height: 1.6; }
+tbody tr:last-child td { border-bottom: 0; }
+td code { white-space: nowrap; }
+td:first-child { color: var(--fg-strong); font-weight: 500; }
+table.compact td, table.compact th { padding-block: .52rem; }
+
+/* ── Callouts ───────────────────────────────────────────────────────────── */
+.callout {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .8rem;
+  margin: 1.35rem 0; padding: .95rem 1rem;
+  border: 1px solid var(--line); border-left: 3px solid var(--accent);
+  border-radius: 10px; background: var(--note-bg);
+}
+.callout-icon { color: var(--accent-strong); margin-top: .12rem; }
+.callout-icon svg { width: 18px; height: 18px; display: block; }
+.callout-body { min-width: 0; }
+.callout-body > :last-child { margin-bottom: 0; }
+.callout-body strong { display: block; color: var(--fg-strong); font-size: .92rem; margin-bottom: .18rem; }
+.callout-body p { margin-bottom: .35rem; font-size: .9rem; color: var(--fg); max-width: none; }
+.callout-body ul { margin: .2rem 0 .3rem; padding-left: 1.1rem; font-size: .9rem; }
+.callout.warning { border-left-color: var(--signal); background: var(--warn-bg); }
+.callout.warning .callout-icon { color: var(--signal); }
+.callout.danger { border-left-color: var(--danger); background: var(--danger-bg); }
+.callout.danger .callout-icon { color: var(--danger); }
+.callout.tip { border-left-color: var(--ok); background: var(--ok-soft); }
+.callout.tip .callout-icon { color: var(--ok); }
+
+/* ── Cards ──────────────────────────────────────────────────────────────── */
+.card-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+  gap: .9rem; margin: 1.2rem 0;
+}
+.card {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 11px; padding: .95rem 1rem;
+}
+.card h4 { margin: 0 0 .3rem; font-size: .9rem; }
+.card p { margin: 0; font-size: .84rem; color: var(--muted); line-height: 1.65; max-width: none; }
+.card .card-icon {
+  display: inline-grid; place-items: center; width: 30px; height: 30px;
+  margin-bottom: .6rem; border-radius: 8px;
+  background: var(--accent-soft); color: var(--accent-strong);
+}
+.card .card-icon svg { width: 16px; height: 16px; }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.2rem 0; }
+.split > div { min-width: 0; }
+
+/* ── Flow diagram ───────────────────────────────────────────────────────── */
+.flow {
+  display: flex; align-items: stretch; gap: 0;
+  margin: 1.4rem 0; padding: 1rem;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 12px; box-shadow: var(--shadow);
+}
+.flow-node {
+  flex: 1 1 0; min-width: 132px;
+  padding: .8rem .85rem; border-radius: 9px;
+  background: var(--surface-2); border: 1px solid var(--line);
+}
+.flow-node .node-kicker {
+  display: block; margin-bottom: .18rem;
+  font-family: var(--font-mono); font-size: .6rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--faint);
+}
+.flow-node strong { display: block; color: var(--fg-strong); font-size: .86rem; line-height: 1.4; }
+.flow-node small { display: block; margin-top: .2rem; color: var(--muted); font-size: .7rem; line-height: 1.45; }
+.flow-node.you { border-color: var(--accent); background: var(--accent-soft); }
+.flow-node.you .node-kicker { color: var(--accent-strong); }
+.flow-arrow {
+  flex: 0 0 74px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: .3rem;
+  color: var(--faint); font-family: var(--font-mono); font-size: .6rem;
+  letter-spacing: .03em;
+}
+.flow-arrow .line { position: relative; width: 100%; height: 1px; background: var(--line-strong); }
+.flow-arrow .line::after {
+  content: ""; position: absolute; right: 0; top: -3px;
+  border: 3.5px solid transparent; border-left-color: var(--line-strong);
+}
+
+/* ── Timeline / protocol diagram ────────────────────────────────────────── */
+.timeline-scroll { margin: 1.4rem 0; overflow-x: auto; }
+.timeline {
+  min-width: 620px; padding: .95rem 1rem 1rem;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 12px; box-shadow: var(--shadow);
+}
+.timeline-head {
+  display: grid; grid-template-columns: minmax(0,1fr) 58px minmax(0,1fr);
+  align-items: center; margin-bottom: .5rem;
+  font-family: var(--font-mono); font-size: .65rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--faint);
+}
+.timeline-head span:first-child { text-align: left; }
+.timeline-head span:last-child { text-align: right; }
+.tl-row {
+  display: grid; grid-template-columns: minmax(0,1fr) 58px minmax(0,1fr);
+  align-items: center; padding: .15rem 0;
+}
+.tl-row .bubble {
+  min-width: 0; padding: .52rem .65rem;
+  border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface-2);
+  font-family: var(--font-mono); font-size: .69rem; line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.tl-row .bubble .type { color: var(--accent-strong); font-weight: 600; }
+.tl-row .bubble .payload { display: block; color: var(--muted); font-size: .64rem; margin-top: .12rem; }
+.tl-row.from-plugin .bubble { grid-column: 1; border-left: 2px solid var(--accent); }
+.tl-row.from-host .bubble { grid-column: 3; border-right: 2px solid var(--signal); text-align: right; }
+.tl-row.from-host .bubble .type { color: var(--signal); }
+.tl-row .arrow { grid-column: 2; text-align: center; color: var(--line-strong); font-family: var(--font-mono); font-size: .9rem; }
+.tl-break {
+  display: flex; align-items: center; gap: .6rem;
+  margin: .55rem 0; color: var(--faint);
+  font-family: var(--font-mono); font-size: .62rem; letter-spacing: .08em; text-transform: uppercase;
+}
+.tl-break::before, .tl-break::after { content: ""; height: 1px; flex: 1; background: var(--line); }
+
+/* ── Lifecycle pills ────────────────────────────────────────────────────── */
+.lifecycle { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem; margin: 1.1rem 0; }
+.pill {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .28rem .62rem; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--surface); color: var(--fg);
+  font-family: var(--font-mono); font-size: .72rem;
+}
+.pill.accent { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-strong); }
+.pill.warn { border-color: var(--signal); background: var(--warn-bg); color: var(--signal); }
+.pill.bad { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
+.pill-arrow { color: var(--line-strong); font-family: var(--font-mono); font-size: .8rem; }
+
+/* ── Steps ──────────────────────────────────────────────────────────────── */
+.steps { list-style: none; margin: 1.4rem 0 0; padding: 0; display: grid; gap: 1.7rem; counter-reset: step; }
+.steps > li { position: relative; padding-left: 2.85rem; counter-increment: step; min-width: 0; }
+.steps > li::before {
+  content: counter(step);
+  position: absolute; left: 0; top: -.12rem;
+  display: grid; place-items: center; width: 1.95rem; height: 1.95rem;
+  border-radius: 50%; border: 1px solid var(--accent);
+  background: var(--accent-soft); color: var(--accent-strong);
+  font-family: var(--font-mono); font-size: .78rem; font-weight: 600;
+}
+.steps > li > h3 { margin-top: 0; }
+.steps > li > h3:first-child { margin-bottom: .5rem; }
+.steps > li > :last-child { margin-bottom: 0; }
+
+/* ── FAQ / troubleshooting ──────────────────────────────────────────────── */
+.faq { display: grid; gap: 0; margin-top: 1rem; border-top: 1px solid var(--line); }
+.faq-item { padding: 1rem 0; border-bottom: 1px solid var(--line); }
+.faq-item h3 { margin: 0 0 .35rem; font-size: .96rem; }
+.faq-item p { margin: 0 0 .35rem; font-size: .89rem; max-width: none; }
+.faq-item p:last-child { margin-bottom: 0; }
+.faq-item ul { margin: .2rem 0 .3rem; padding-left: 1.1rem; font-size: .89rem; }
+
+/* ── Search ─────────────────────────────────────────────────────────────── */
+.search-modal { position: fixed; inset: 0; z-index: 100; }
+.search-backdrop { position: absolute; inset: 0; background: var(--scrim); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+.search-panel {
+  position: relative; width: min(620px, calc(100vw - 32px));
+  margin: 11vh auto 0; background: var(--surface);
+  border: 1px solid var(--line-strong); border-radius: 14px;
+  box-shadow: var(--shadow-lg); overflow: hidden;
+  animation: search-in .16s ease-out;
+}
+@keyframes search-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.search-bar { display: flex; align-items: center; gap: .6rem; padding: .8rem .95rem; border-bottom: 1px solid var(--line); }
+.search-bar svg { width: 18px; height: 18px; color: var(--faint); flex: 0 0 auto; }
+.search-bar input {
+  flex: 1 1 auto; min-width: 0; border: 0; outline: 0; background: transparent;
+  color: var(--fg-strong); font-size: .95rem; padding: .1rem 0;
+}
+.search-bar input::placeholder { color: var(--faint); }
+.search-results { max-height: min(52vh, 430px); overflow-y: auto; padding: .45rem; }
+.search-result {
+  display: block; width: 100%; text-align: left; border: 0; background: transparent;
+  padding: .55rem .65rem; border-radius: 8px; color: var(--fg);
+}
+.search-result:hover, .search-result.selected { background: var(--surface-2); }
+.search-result .sr-title { display: block; font-size: .89rem; font-weight: 500; color: var(--fg-strong); }
+.search-result .sr-context { display: block; font-size: .69rem; color: var(--faint); font-family: var(--font-mono); margin-top: .05rem; }
+.search-result .sr-snippet { display: block; font-size: .76rem; color: var(--muted); line-height: 1.5; margin-top: .18rem; }
+.search-empty { padding: 1.3rem .8rem; text-align: center; color: var(--muted); font-size: .86rem; }
+.search-hint {
+  display: flex; gap: 1rem; padding: .52rem .95rem;
+  border-top: 1px solid var(--line); color: var(--faint);
+  font-size: .68rem; background: var(--surface-2);
+}
+.search-hint span { display: inline-flex; align-items: center; gap: .25rem; }
+body.modal-open, body.nav-open { overflow: hidden; }
+body.nav-open .scrim { display: block; }
+
+/* ── Footer ─────────────────────────────────────────────────────────────── */
+.site-footer { border-top: 1px solid var(--line); background: var(--surface); }
+.footer-inner {
+  width: 100%; max-width: var(--maxw); margin-inline: auto;
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 1.5rem;
+  padding: 1.6rem max(16px, env(safe-area-inset-right, 0px)) 2rem max(16px, env(safe-area-inset-left, 0px));
+}
+.footer-inner strong { color: var(--fg-strong); font-size: .9rem; }
+.footer-inner p { margin: .2rem 0 0; color: var(--muted); font-size: .78rem; max-width: 46ch; }
+.footer-links { display: flex; flex-wrap: wrap; gap: 1rem; font-size: .78rem; }
+.footer-links a { color: var(--muted); text-decoration: none; }
+.footer-links a:hover { color: var(--accent-strong); text-decoration: underline; }
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 1279px) {
+  .layout { grid-template-columns: var(--sidebar-w) minmax(0, 1fr); }
+  .toc { display: none; }
+}
+@media (max-width: 1023px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .content { padding: 28px 0 80px; }
+  .nav-toggle { display: inline-flex; }
+  .sidebar {
+    position: fixed; inset: 0 auto 0 0; z-index: 60;
+    width: min(310px, 86vw); max-height: none;
+    margin: 0; padding: max(14px, env(safe-area-inset-top, 0px)) 18px 28px max(18px, env(safe-area-inset-left, 0px));
+    background: var(--surface); border-right: 1px solid var(--line);
+    transform: translateX(-102%); transition: transform .22s ease;
+    overflow-y: auto;
+  }
+  body.nav-open .sidebar { transform: translateX(0); }
+  .sidebar-mobile-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; padding-bottom: 1rem; margin-bottom: 1.1rem; border-bottom: 1px solid var(--line);
+  }
+  .sidebar-mobile-head .brand { font-size: .92rem; }
+  .sidebar-mobile-head .brand-mark { width: 28px; height: 28px; border-radius: 8px; }
+  .sidebar-mobile-head .brand-mark svg { width: 16px; height: 16px; }
+  .scrim { display: none; }
+  .hero { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+  .hero-console { max-width: 620px; }
+  .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .stat:nth-child(5) { grid-column: span 2; }
+  .footer-inner { flex-direction: column; }
+}
+@media (max-width: 900px) {
+  .flow { flex-direction: column; }
+  .flow-arrow { flex: 0 0 44px; }
+  .flow-arrow .line { width: 1px; height: 100%; }
+  .flow-arrow .line::after {
+    right: auto; left: -3px; top: auto; bottom: 0;
+    border-left-color: transparent; border-top-color: var(--line-strong);
+  }
+}
+@media (max-width: 700px) {
+  body { font-size: 15.5px; }
+  .brand-sub, .brand-divider { display: none; }
+  .search-trigger span, .search-trigger kbd { display: none; }
+  .search-trigger { width: 36px; height: 36px; padding: 0; }
+  .content { padding-top: 22px; }
+  .hero { padding-top: 0; }
+  .hero h1 { font-size: clamp(2rem, 10vw, 2.6rem); }
+  .hero-actions .btn { flex: 1 1 auto; }
+  .split { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat:last-child { grid-column: 1 / -1; }
+  .steps > li { padding-left: 2.55rem; }
+  .steps > li::before { width: 1.75rem; height: 1.75rem; }
+  .footer-inner { padding-bottom: 1.5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+</style>
+<script>
+  try {
+    const savedTheme = localStorage.getItem('gsdocs-theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      document.documentElement.dataset.theme = savedTheme;
+    }
+  } catch (error) {}
+  document.documentElement.lang = 'zh-CN';
+</script>
+<style>
+.resource-card { display: block; color: inherit; text-decoration: none; transition: border-color .16s ease, transform .16s ease; }
+.resource-card:hover { border-color: var(--accent); text-decoration: none; transform: translateY(-1px); }
+.resource-card h4 { color: var(--fg-strong); }
+@media (max-width: 380px) { .topbar-inner > a.icon-btn { display: none; } }
+@media (prefers-reduced-motion: reduce) { .resource-card:hover { transform: none; } }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">跳到正文</a>
+<div id="top"></div>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <button class="icon-btn nav-toggle" id="navToggle" aria-label="打开文档目录" aria-expanded="false" aria-controls="sidebar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <a class="brand" href="#top" aria-label="GameSupport 插件开发文档首页">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="12" r="2.2"/><circle cx="18.5" cy="6" r="2.2"/><circle cx="18.5" cy="18" r="2.2"/><path d="M7.6 11.2 16.4 6.8M7.6 12.8l8.8 4.4"/></svg>
+      </span>
+      <span>GameSupport</span>
+      <span class="brand-divider" aria-hidden="true">/</span>
+      <span class="brand-sub">插件开发</span>
+    </a>
+    <div class="topbar-spacer"></div>
+    <button class="search-trigger" id="searchOpen" aria-label="搜索文档">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.2 4.2"/></svg>
+      <span>搜索文档</span>
+      <kbd>Ctrl K</kbd>
+    </button>
+    <button class="icon-btn theme-toggle" id="themeToggle" data-mode="system" aria-label="切换主题：跟随系统" title="切换主题">
+      <svg class="theme-icon system" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3.4"/><path d="M12 3.5v2M12 18.5v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M3.5 12h2M18.5 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="theme-icon light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3.6"/><path d="M12 3.5v2M12 18.5v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M3.5 12h2M18.5 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="theme-icon dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.3 8.3 0 1 0 10.2 10.2Z"/></svg>
+    </button>
+    <a class="icon-btn" href="https://github.com/shuo-huge/gamesupport-javascript-plugin" target="_blank" rel="noreferrer noopener" aria-label="打开 GitHub 模板仓库" title="GitHub 模板仓库">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.86c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.36 1.09 2.93.83.09-.65.35-1.09.64-1.34-2.22-.25-4.56-1.11-4.56-4.93 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.83-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></svg>
+    </a>
+  </div>
+  <div class="progress-track" aria-hidden="true"><div id="progressBar"></div></div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar" aria-label="文档目录">
+    <div class="sidebar-mobile-head">
+      <span class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="12" r="2.2"/><circle cx="18.5" cy="6" r="2.2"/><circle cx="18.5" cy="18" r="2.2"/><path d="M7.6 11.2 16.4 6.8M7.6 12.8l8.8 4.4"/></svg>
+        </span>
+        <span>GameSupport 插件开发</span>
+      </span>
+      <button class="icon-btn" id="navClose" aria-label="关闭文档目录">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-group">
+        <p class="nav-label">入门</p>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="#overview">概览</a></li>
+          <li><a class="nav-link" href="#quickstart">快速开始</a></li>
+          <li><a class="nav-link" href="#concepts">核心概念</a></li>
+        </ul>
+      </div>
+      <div class="nav-group">
+        <p class="nav-label">规范</p>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="#structure">项目结构</a></li>
+          <li><a class="nav-link" href="#manifest">manifest 参考</a></li>
+          <li><a class="nav-link" href="#protocol">GS-IPC 协议</a></li>
+          <li><a class="nav-link" href="#permissions">权限模型</a></li>
+          <li><a class="nav-link" href="#lifecycle">生命周期与更新</a></li>
+        </ul>
+      </div>
+      <div class="nav-group">
+        <p class="nav-label">实践</p>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="#tutorial">教程：计时器插件</a></li>
+          <li><a class="nav-link" href="#build">构建与打包</a></li>
+          <li><a class="nav-link" href="#testing">测试与调试</a></li>
+          <li><a class="nav-link" href="#distribution">分发与审核</a></li>
+          <li><a class="nav-link" href="#security">安全须知</a></li>
+        </ul>
+      </div>
+      <div class="nav-group">
+        <p class="nav-label">参考</p>
+        <ul class="nav-list">
+          <li><a class="nav-link" href="#troubleshooting">故障排查</a></li>
+          <li><a class="nav-link" href="#compatibility">兼容性与版本</a></li>
+          <li><a class="nav-link" href="#resources">资源与支持</a></li>
+        </ul>
+      </div>
+    </nav>
+    <div class="sidebar-foot">
+      <span class="badge">SDK 1.0</span>
+      <span>GameSupport 0.4.x</span>
+    </div>
+  </aside>
+
+  <div class="scrim" id="scrim" hidden></div>
+
+  <main class="main" id="main">
+    <div class="content">
+      <div class="hero">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="dot" aria-hidden="true"></span>Plugin SDK 1.0 · 外部开发者文档</div>
+          <h1>编写 GameSupport 插件</h1>
+          <p class="hero-lead">把你的检测逻辑接到 GameSupport 的事件引擎。插件只负责发现事件，音效、动画和触发规则由主程序统一执行。</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#quickstart">10 分钟快速开始
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+            <a class="btn" href="#protocol">查看协议</a>
+          </div>
+          <div class="hero-meta" aria-label="适用环境">
+            <span>Windows x64</span><span>Node.js 22+</span><span>GS-IPC / 1.0</span><span>GameSupport 0.4.x</span>
+          </div>
+        </div>
+        <div class="console" aria-label="GS-IPC 握手与事件示例">
+          <div class="console-bar">
+            <span class="console-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span>gs-ipc / handshake</span>
+            <span class="console-live">live</span>
+          </div>
+          <div class="console-body">
+            <div class="console-line"><span class="lane plugin">plugin</span><span class="dir">→</span><code><span class="c-key">"type"</span>:<span class="c-str">"hello"</span>, <span class="c-key">"plugin_id"</span>:<span class="c-str">"com.example.demo-timer"</span></code></div>
+            <div class="console-line"><span class="lane host">host</span><span class="dir">→</span><code><span class="c-key">"type"</span>:<span class="c-str">"initialize"</span>, <span class="c-key">"permissions"</span>:[<span class="c-str">"events.emit"</span>], <span class="c-key">"config"</span>:{}</code></div>
+            <div class="console-line"><span class="lane plugin">plugin</span><span class="dir">→</span><code><span class="c-key">"type"</span>:<span class="c-str">"ready"</span>, <span class="c-key">"request_id"</span>:<span class="c-str">"init"</span></code></div>
+            <div class="console-line"><span class="lane host">host</span><span class="dir">→</span><code><span class="c-key">"type"</span>:<span class="c-str">"command"</span>, <span class="c-key">"command"</span>:<span class="c-str">"start"</span></code></div>
+            <div class="console-line"><span class="lane plugin">plugin</span><span class="dir">→</span><code><span class="c-key">"type"</span>:<span class="c-str">"status"</span>, <span class="c-key">"state"</span>:<span class="c-str">"running"</span></code></div>
+            <div class="console-line break"><span>运行期</span></div>
+            <div class="console-line"><span class="lane host">host</span><span class="dir">→</span><code><span class="c-dim">every 5s</span> <span class="c-key">"command"</span>:<span class="c-str">"ping"</span></code></div>
+            <div class="console-line"><span class="lane plugin">plugin</span><span class="dir">→</span><code><span class="c-key">"type"</span>:<span class="c-str">"event"</span>, <span class="c-key">"event"</span>:<span class="c-str">"demo.timer.tick"</span>, <span class="c-key">"data"</span>:{<span class="c-key">"at"</span>:<span class="c-num">1732473600000</span>}</code></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats" aria-label="协议关键限制">
+        <div class="stat"><strong>5 s</strong><span>握手每阶段超时</span></div>
+        <div class="stat"><strong>5 s</strong><span>心跳间隔</span></div>
+        <div class="stat"><strong>15 s</strong><span>无 pong 终止</span></div>
+        <div class="stat"><strong>64 KiB</strong><span>单行 JSON 上限</span></div>
+        <div class="stat"><strong>32 KiB</strong><span>事件 data 上限</span></div>
+      </div>
+
+      <section class="doc-section" id="overview">
+        <div class="section-eyebrow">入门 / Overview</div>
+        <h2>插件在 GameSupport 中扮演什么角色</h2>
+        <p class="lead">GameSupport 是 Windows 上的游戏桌面增强工具。全局快捷键、插件和本地 HTTP API 都汇入同一个 Event Bus；触发规则决定某个事件发生时播放什么音效或动画。</p>
+        <p>插件是<strong>事件源</strong>。它不直接操作播放器，也不需要知道用户配置了哪些音效。你只需要在检测到事情发生时，发送一条格式正确的 JSON 事件。</p>
+
+        <div class="flow" role="img" aria-label="插件通过 GS-IPC 将事件发送到 GameSupport 的 Event Bus，再由触发规则播放音效或动画">
+          <div class="flow-node you">
+            <span class="node-kicker">你负责</span>
+            <strong>插件 EXE</strong>
+            <small>检测逻辑 + JSONL</small>
+          </div>
+          <div class="flow-arrow"><span>GS-IPC</span><span class="line" aria-hidden="true"></span></div>
+          <div class="flow-node">
+            <span class="node-kicker">GameSupport</span>
+            <strong>Event Bus</strong>
+            <small>校验、授权、去重与调度</small>
+          </div>
+          <div class="flow-arrow"><span>匹配</span><span class="line" aria-hidden="true"></span></div>
+          <div class="flow-node">
+            <span class="node-kicker">主程序</span>
+            <strong>触发规则</strong>
+            <small>事件 ID → 音效 / 动画</small>
+          </div>
+          <div class="flow-arrow"><span>执行</span><span class="line" aria-hidden="true"></span></div>
+          <div class="flow-node">
+            <span class="node-kicker">原生模块</span>
+            <strong>音效 / 动画</strong>
+            <small>用户配置的输出</small>
+          </div>
+        </div>
+
+        <div class="split">
+          <div>
+            <h3>插件可以做什么</h3>
+            <ul class="prose">
+              <li>观察屏幕或窗口画面，识别游戏状态。</li>
+              <li>监听游戏日志、配置文件或本地数据变化。</li>
+              <li>连接本地设备、服务或网络接口，把状态转成事件。</li>
+              <li>运行定时器、计数器或你自己的状态机。</li>
+            </ul>
+          </div>
+          <div>
+            <h3>插件不做什么</h3>
+            <ul class="prose">
+              <li>不播放音效，不渲染动画。</li>
+              <li>不注册或拦截用户的全局快捷键。</li>
+              <li>不决定冷却、随机动作或触发次数。</li>
+              <li>不直接接触播放器或用户素材。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout">
+          <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></svg></div>
+          <div class="callout-body">
+            <strong>阅读约定</strong>
+            <p><b>Host</b> 指 GameSupport 主程序；<b>Plugin</b> 指你的插件进程。消息均以 UTF-8 编码，每条 JSON 以 LF 结尾。示例使用 PowerShell，路径均相对于插件包根目录。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="doc-section" id="quickstart">
+        <div class="section-eyebrow">入门 / Quick start</div>
+        <h2>10 分钟跑通模板</h2>
+        <p class="lead">先用官方模板确认安装、授权、事件和触发规则整条链路。跑通之后，再把模板里的示例逻辑换成你自己的检测代码。</p>
+
+        <div class="callout warning">
+          <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 21 20H3Z"/><path d="M12 9v5M12 17h.01"/></svg></div>
+          <div class="callout-body">
+            <strong>先确认环境</strong>
+            <p>构建机需要 Windows x64、Node.js 22+ 和 Go。Go 只用于编译最小的 EXE 启动器。最终用户不需要安装 Node 或 Go，运行时会随插件包分发。</p>
+          </div>
+        </div>
+
+        <ol class="steps">
+          <li>
+            <h3>获取模板</h3>
+            <p>模板仓库包含 <code>plugin.cjs</code>、<code>launcher.go</code> 和 <code>build.mjs</code>，没有 npm 依赖。</p>
+            <div class="codeblock" data-file="powershell" data-lang="powershell"><pre><code class="language-powershell">git clone https://github.com/shuo-huge/gamesupport-javascript-plugin.git
+cd gamesupport-javascript-plugin</code></pre></div>
+          </li>
+          <li>
+            <h3>构建插件包</h3>
+            <p>构建脚本会编译启动器、复制 Node 运行时、计算 SHA-256 并生成 <code>manifest.json</code>。终端最后一行会打印可安装目录。</p>
+            <div class="codeblock" data-file="powershell" data-lang="powershell"><pre><code class="language-powershell">node build.mjs</code></pre></div>
+            <p class="small muted">输出通常是 <code>build/javascript-example</code>。以脚本实际打印的路径为准。</p>
+          </li>
+          <li>
+            <h3>安装本地插件</h3>
+            <p>打开 GameSupport，进入<strong>插件中心</strong>，点击<strong>安装本地插件</strong>，选择包含 <code>manifest.json</code> 的构建目录。不要选择它的上级目录。</p>
+          </li>
+          <li>
+            <h3>授权并启动</h3>
+            <p>在插件卡片上打开<strong>配置与权限</strong>，勾选 <code>events.emit</code>，点击<strong>保存授权与配置</strong>。保存后回到卡片点击<strong>启动</strong>，等待状态变成<strong>运行中</strong>。</p>
+          </li>
+          <li>
+            <h3>创建一条触发规则</h3>
+            <p>进入<strong>触发中心</strong>新建规则，事件标识填写 <code>example.pulse</code>，加入你自己的音效或动画并保存。也可以直接从插件卡片点击<strong>添加到触发中心 · 示例脉冲</strong>。</p>
+          </li>
+          <li>
+            <h3>请求测试事件</h3>
+            <p>回到插件配置页，点击<strong>请求测试事件</strong>。模板会收到 <code>configure</code> 命令并立即发送一条 <code>example.pulse</code>。你应听到音效或看到动画，插件日志也会出现记录。</p>
+          </li>
+        </ol>
+
+        <div class="callout tip">
+          <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m4 12.5 5 5L20 6.5"/></svg></div>
+          <div class="callout-body">
+            <strong>不需要开启本地 HTTP API</strong>
+            <p>JavaScript 模板通过 stdin/stdout 直接连接主程序。测试事件也不会定时自动发送，只有你点击按钮或满足你自己的触发条件时才发送。</p>
+          </div>
+        </div>
+
+        <p>如果链路中断，先看<a href="#troubleshooting">故障排查</a>。最常见的原因是构建目录选错、没有授权 <code>events.emit</code>、规则中的事件 ID 拼写不一致，或修改源码后没有重新构建。</p>
+      </section>
+
+      <section class="doc-section" id="concepts">
+        <div class="section-eyebrow">入门 / Concepts</div>
+        <h2>先记住这六件事</h2>
+        <p class="lead">插件系统的规则不多，但每一条都直接影响插件能否启动、能否收到事件，以及更新后用户是否还需要重新授权。</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9h8M8 13h5"/></svg></span>
+            <h4>manifest 是契约</h4>
+            <p>插件 ID、版本、事件、权限和文件哈希都写在 manifest 里。Host 在每次启动前重新校验。</p>
+          </div>
+          <div class="card">
+            <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h10"/><circle cx="18.5" cy="17" r="1.5"/></svg></span>
+            <h4>JSONL 是唯一输出</h4>
+            <p>stdout 每一行必须是一条完整的 GS-IPC JSON。普通日志一律写 stderr。</p>
+          </div>
+          <div class="card">
+            <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4.5 7.3v9.4L12 21l7.5-4.3V7.3Z"/><path d="m4.8 7.5 7.2 4.2 7.2-4.2M12 21v-9.3"/></svg></span>
+            <h4>每个插件独立进程</h4>
+            <p>崩溃、协议错误或 JSON 解析失败只影响该插件，主程序和其他插件继续运行。</p>
+          </div>
+          <div class="card">
+            <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v16M18 4v16M9 8h6M9 16h6"/></svg></span>
+            <h4>Event ID 是公开 API</h4>
+            <p>用户规则绑定事件 ID。发布后不要重命名或删除，新增事件比改旧 ID 安全。</p>
+          </div>
+          <div class="card">
+            <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.4 3 8.2 7 9.5 4-1.3 7-5.1 7-9.5V6Z"/><path d="m9 12 2 2 4-4"/></svg></span>
+            <h4>权限由用户授予</h4>
+            <p>首次安装不授予任何权限。用户逐项勾选后，插件才能获得对应的能力声明。</p>
+          </div>
+          <div class="card">
+            <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7.5 12 3l7 4.5v9L12 21l-7-4.5Z"/><path d="M12 12v9M5 7.5l7 4.5 7-4.5"/></svg></span>
+            <h4>JavaScript 不是沙箱</h4>
+            <p>模板用 EXE 启动 Node。勾选权限不会限制 Node 的 Windows 文件、网络或进程能力。</p>
+          </div>
+        </div>
+
+        <h3>一次事件从插件到扬声器</h3>
+        <p>以模板为例，完整链路如下：</p>
+        <ol class="prose">
+          <li>用户在插件配置页点击<strong>请求测试事件</strong>，Host 发送 <code>configure</code> 命令。</li>
+          <li><code>plugin.cjs</code> 调用 <code>emitPulse()</code>，向 stdout 写入一条 <code>event</code> 消息。</li>
+          <li>Host 校验插件已授权 <code>events.emit</code>，并且事件已在 manifest 中声明。</li>
+          <li>Host 为事件补充可信来源和时间戳，放进统一的 Event Bus。</li>
+          <li>触发规则匹配事件 ID，调度音效或动画。</li>
+          <li>插件日志、事件记录和实际播放各自独立记录；<strong>已调度</strong>表示进入队列，不等于测得播放成功。</li>
+        </ol>
+      </section>
+
+      <section class="doc-section" id="structure">
+        <div class="section-eyebrow">规范 / Structure</div>
+        <h2>一个插件包里有什么</h2>
+        <p class="lead">源码目录和安装目录是两回事。源码包含启动器的 Go 文件；安装目录只保留运行所需的文件、清单和哈希。</p>
+
+        <div class="split">
+          <div>
+            <h3>源码目录</h3>
+            <div class="codeblock" data-file="源码" data-lang="text"><pre><code class="language-plaintext">my-plugin/
+├─ plugin.cjs        # 你的插件逻辑
+├─ launcher.go       # EXE 启动器源码
+├─ build.mjs         # 构建、复制运行时、生成哈希
+└─ README.md         # 使用说明与权限披露</code></pre></div>
+          </div>
+          <div>
+            <h3>安装目录</h3>
+            <div class="codeblock" data-file="构建产物" data-lang="text"><pre><code class="language-plaintext">build/demo-timer/
+├─ manifest.json     # 由构建脚本生成
+├─ plugin.cjs
+├─ NODE-LICENSE.txt
+└─ bin/
+   ├─ launcher.exe
+   └─ node.exe</code></pre></div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>文件</th><th>作用</th><th>注意</th></tr></thead>
+            <tbody>
+              <tr><td><code>plugin.cjs</code></td><td>插件的全部运行逻辑，由 Node 执行。</td><td>stdout 只写 GS-IPC JSON；日志用 <code>console.error</code>。</td></tr>
+              <tr><td><code>launcher.exe</code></td><td>Host 实际启动的入口，把 stdin/stdout/stderr 原样转给 <code>node.exe</code>。</td><td>由 <code>launcher.go</code> 编译，当前 Host 只接受 EXE 入口，且不传命令行参数。</td></tr>
+              <tr><td><code>node.exe</code></td><td>随包分发的 Node 运行时。</td><td>体积较大；必须保留版权与第三方声明。</td></tr>
+              <tr><td><code>manifest.json</code></td><td>插件身份、事件、权限与完整性清单。</td><td>不要手改安装目录中的副本；重新构建再更新。</td></tr>
+              <tr><td><code>NODE-LICENSE.txt</code></td><td>Node 运行时的许可文本。</td><td>分发运行时必须附带。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout warning">
+          <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 21 20H3Z"/><path d="M12 9v5M12 17h.01"/></svg></div>
+          <div class="callout-body">
+            <strong>不能只安装一个 .js 文件</strong>
+            <p>当前 Host 的入口必须是包内的 <code>.exe</code>。模板用一个小型启动器承载 Node，这是为了适配现有 Native 插件进程模型，不代表 JavaScript 运行在沙箱里。</p>
+          </div>
+        </div>
+
+        <h3>如果引入 npm 依赖</h3>
+        <p>模板刻意不使用 npm 依赖。你可以引入第三方包，但必须把运行时需要的文件一起放进安装目录，并全部纳入 <code>files</code> 哈希。最终用户不会执行 <code>npm install</code>。依赖过多时也可能触达 512 个目录项或 512 MiB 的包体上限，优先选择无依赖或可打包成单文件的方案。</p>
+      </section>
+
+      <section class="doc-section" id="manifest">
+        <div class="section-eyebrow">规范 / Manifest</div>
+        <h2>插件清单参考</h2>
+        <p class="lead"><code>manifest.json</code> 描述插件是谁、能发送哪些事件、需要哪些权限，以及包内每个文件的哈希。Host 在安装和每次启动前都会校验它。</p>
+
+        <div class="callout">
+          <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></svg></div>
+          <div class="callout-body">
+            <strong>让构建脚本生成它</strong>
+            <p>模板中的 <code>build.mjs</code> 会写出 manifest 并计算哈希。手写容易漏文件或写错版本。安装后也不要直接修改用户目录里的副本，Host 会按清单重新校验。</p>
+          </div>
+        </div>
+
+        <div class="codeblock" data-file="manifest.json" data-lang="json"><pre><code class="language-json">{
+  "manifest_version": 1,
+  "id": "com.example.demo-timer",
+  "name": "Demo Timer",
+  "version": "1.0.0",
+  "author": "Your Name",
+  "description": "按固定间隔发送 demo.timer.tick 事件。",
+  "type": "event_provider",
+  "runtime": {
+    "type": "native",
+    "os": ["windows"],
+    "arch": ["x86_64"],
+    "executable": "bin/launcher.exe",
+    "protocol": "gs-ipc/1.0"
+  },
+  "permissions": ["events.emit"],
+  "events": [
+    { "id": "demo.timer.tick", "name": "计时器滴答" }
+  ],
+  "files": {
+    "bin/launcher.exe": "由 build.mjs 生成的 64 位十六进制",
+    "bin/node.exe": "由 build.mjs 生成的 64 位十六进制",
+    "plugin.cjs": "由 build.mjs 生成的 64 位十六进制",
+    "NODE-LICENSE.txt": "由 build.mjs 生成的 64 位十六进制"
+  }
+}</code></pre></div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>字段</th><th>约束</th><th>说明</th></tr></thead>
+            <tbody>
+              <tr><td><code>manifest_version</code></td><td>固定 <code>1</code></td><td>清单格式版本，当前只支持 1。</td></tr>
+              <tr><td><code>id</code></td><td>反向域名，≥3 段，小写</td><td>全局唯一。配置、授权和更新都以它为键，发布后不要改。</td></tr>
+              <tr><td><code>name</code></td><td>1–100 字符</td><td>插件中心显示的名字。</td></tr>
+              <tr><td><code>version</code></td><td>SemVer</td><td><code>1.0.0</code> 或 <code>1.1.0-beta.1</code>。更新必须严格高于已安装版本。</td></tr>
+              <tr><td><code>author</code></td><td>非空字符串</td><td>个人或团队名称。</td></tr>
+              <tr><td><code>description</code></td><td>≤2000 字符</td><td>说明插件做什么、读取什么、发送哪些事件。</td></tr>
+              <tr><td><code>type</code></td><td>固定 <code>event_provider</code></td><td>当前唯一的插件类型：事件提供者。</td></tr>
+              <tr><td><code>runtime</code></td><td>对象</td><td><code>type: native</code>、<code>os: ["windows"]</code>、<code>arch: ["x86_64"]</code>，入口是包内相对路径的 <code>.exe</code>，协议固定。</td></tr>
+              <tr><td><code>permissions</code></td><td>枚举数组</td><td>只能声明 Host 支持的六种权限，详见<a href="#permissions">权限模型</a>。</td></tr>
+              <tr><td><code>events</code></td><td>最多 128 项</td><td>每项包含 <code>id</code> 与 <code>name</code>。未声明的事件发送会被拒绝。</td></tr>
+              <tr><td><code>files</code></td><td>1–256 项</td><td>包内除 manifest 外每个文件到小写 SHA-256 的映射。安装和启动前都会校验。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small muted">Schema 不允许未定义字段（<code>additionalProperties: false</code>）。多写一个字段会导致清单校验失败。</p>
+
+        <h3>插件 ID 规则</h3>
+        <p>ID 使用反向域名格式，至少三段。它同时是插件目录、配置记录和授权记录的主键。</p>
+        <div class="split">
+          <div>
+            <h4>可以</h4>
+            <ul class="prose">
+              <li><code>com.example.demo-timer</code></li>
+              <li><code>com.yourstudio.boss-alert</code></li>
+              <li><code>io.team.game.events</code></li>
+            </ul>
+          </div>
+          <div>
+            <h4>不可以</h4>
+            <ul class="prose">
+              <li><code>demo-timer</code>：只有一段。</li>
+              <li><code>com.Example.Demo</code>：包含大写字母。</li>
+              <li><code>com.example..timer</code>：空段。</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>版本规则</h3>
+        <ul class="prose">
+          <li>使用语义化版本：主版本.次版本.修订号。</li>
+          <li>更新包必须与已安装插件同 ID，且版本严格更高；降级会被拒绝。</li>
+          <li><code>plugin.cjs</code> 中 <code>hello.version</code> 必须与 manifest 的 <code>version</code> 完全一致，否则握手失败。</li>
+          <li>每次向用户分发新的代码或资源，都要提升版本并重新构建，让哈希与清单一起更新。</li>
+        </ul>
+
+        <h3>事件声明</h3>
+        <p>事件 ID 使用小写字母、数字、下划线和点号，例如 <code>game.kill</code>、<code>demo.timer.tick</code>、<code>screen.boss.enter</code>。名字是展示给用户的说明。</p>
+        <ul class="prose">
+          <li><strong>事件 ID 是对外 API。</strong>用户规则直接绑定它。发布后不要重命名或删除；需要变化时新增一个 ID，并保留旧事件一段时间。</li>
+          <li>声明了但暂时没有发送是允许的。发送未声明的事件会被 Host 拒绝。</li>
+          <li>事件发送还必须获得 <code>events.emit</code> 授权。</li>
+        </ul>
+
+        <h3>完整性与包体限制</h3>
+        <p><code>files</code> 必须包含安装目录中除 <code>manifest.json</code> 以外的所有文件，包括 EXE、DLL、Node 运行时和许可文本。Host 会重新计算哈希，不匹配就拒绝启动。</p>
+        <div class="table-wrap">
+          <table class="compact">
+            <thead><tr><th>限制</th><th>数值</th></tr></thead>
+            <tbody>
+              <tr><td>manifest 文件大小</td><td>≤128 KiB</td></tr>
+              <tr><td>安装包总大小</td><td>≤512 MiB</td></tr>
+              <tr><td>包内目录项</td><td>≤512</td></tr>
+              <tr><td><code>files</code> 条目</td><td>1–256</td></tr>
+              <tr><td>路径</td><td>必须是相对路径；禁止绝对路径、<code>..</code>、NTFS 数据流、符号链接和目录联接。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small muted">哈希值必须是小写十六进制 SHA-256。修改任意文件后，旧 manifest 立即失效，必须重新构建。</p>
+      </section>
+
+      <section class="doc-section" id="protocol">
+        <div class="section-eyebrow">规范 / Protocol</div>
+        <h2>GS-IPC / 1.0 协议</h2>
+        <p class="lead">插件通过标准输入输出与 Host 通信。stdin 接收命令，stdout 发送消息，stderr 写日志。没有 HTTP、没有端口、没有额外 SDK。</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>通道</th><th>方向</th><th>用途</th></tr></thead>
+            <tbody>
+              <tr><td>stdin</td><td>Host → Plugin</td><td>初始化、启动、心跳、配置和停止命令。</td></tr>
+              <tr><td>stdout</td><td>Plugin → Host</td><td>只允许 GS-IPC JSON。每行一条，以 LF 结尾。</td></tr>
+              <tr><td>stderr</td><td>Plugin → Host 日志</td><td>普通日志、错误和调试信息。不会进入协议解析。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout danger">
+          <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.4 3 8.2 7 9.5 4-1.3 7-5.1 7-9.5V6Z"/><path d="M12 8v4.5M12 16h.01"/></svg></div>
+          <div class="callout-body">
+            <strong>stdout 是协议通道，不是日志窗口</strong>
+            <p><code>console.log()</code>、调试输出、进度条或任何非 JSON 文本都会破坏协议。普通日志请使用 <code>console.error()</code>。stdout 也不能输出图像或二进制。</p>
+          </div>
+        </div>
+
+        <h3>连接限制</h3>
+        <div class="table-wrap">
+          <table class="compact">
+            <thead><tr><th>项目</th><th>限制</th></tr></thead>
+            <tbody>
+              <tr><td>编码与分帧</td><td>UTF-8；每条 JSON 以 LF 结束；每行最多 65,536 字节（含 LF）。</td></tr>
+              <tr><td>消息速率</td><td>每个插件每秒最多 100 条 Plugin → Host 消息。</td></tr>
+              <tr><td>事件 data</td><td>≤32 KiB。</td></tr>
+              <tr><td>Host 收件队列</td><td>128 条。</td></tr>
+              <tr><td>统一事件队列</td><td>256 条。</td></tr>
+              <tr><td>initialize 配置</td><td>≤32 KiB 的 JSON 对象。</td></tr>
+              <tr><td>握手阶段超时</td><td>每个阶段 5 秒。</td></tr>
+              <tr><td>心跳</td><td>每 5 秒一次；15 秒没有 pong 会被终止。</td></tr>
+              <tr><td>停止等待</td><td>2 秒；超时强制终止并回收进程树。</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>队列满、非法消息、JSON 解析错误或握手错误都会中止该插件并写入异常日志。其他插件和主程序不受影响。</p>
+
+        <h3>握手顺序</h3>
+        <p>五个阶段必须严格按顺序完成。每一阶段都有 5 秒超时。</p>
+        <div class="timeline-scroll">
+          <div class="timeline" role="img" aria-label="GS-IPC 握手时序：插件发送 hello，Host 发送 initialize，插件回复 ready，Host 发送 start，插件报告 running">
+            <div class="timeline-head"><span>Plugin</span><span></span><span>Host</span></div>
+            <div class="tl-row from-plugin">
+              <div class="bubble"><span class="type">hello</span><span class="payload">plugin_id · version · protocol</span></div>
+              <div class="arrow">→</div>
+            </div>
+            <div class="tl-row from-host">
+              <div class="arrow">←</div>
+              <div class="bubble"><span class="type">initialize</span><span class="payload">permissions · config · request_id</span></div>
+            </div>
+            <div class="tl-row from-plugin">
+              <div class="bubble"><span class="type">ready</span><span class="payload">request_id: init</span></div>
+              <div class="arrow">→</div>
+            </div>
+            <div class="tl-row from-host">
+              <div class="arrow">←</div>
+              <div class="bubble"><span class="type">command · start</span><span class="payload">request_id: start</span></div>
+            </div>
+            <div class="tl-row from-plugin">
+              <div class="bubble"><span class="type">status</span><span class="payload">state: running</span></div>
+              <div class="arrow">→</div>
+            </div>
+            <div class="tl-break">运行期</div>
+            <div class="tl-row from-host">
+              <div class="arrow">←</div>
+              <div class="bubble"><span class="type">ping</span><span class="payload">每 5 秒 · request_id: heartbeat</span></div>
+            </div>
+            <div class="tl-row from-plugin">
+              <div class="bubble"><span class="type">pong</span><span class="payload">request_id: heartbeat</span></div>
+              <div class="arrow">→</div>
+            </div>
+            <div class="tl-row from-plugin">
+              <div class="bubble"><span class="type">event</span><span class="payload">event · data</span></div>
+              <div class="arrow">→</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="codeblock" data-file="握手（按顺序）" data-lang="jsonl"><pre><code class="language-plaintext">{"type":"hello","plugin_id":"com.example.demo-timer","version":"1.0.0","protocol":"gs-ipc/1.0"}
+{"type":"initialize","request_id":"init","protocol":"gs-ipc/1.0","permissions":["events.emit"],"config":{}}
+{"type":"ready","request_id":"init"}
+{"type":"command","command":"start","request_id":"start"}
+{"type":"status","state":"running"}</code></pre></div>
+
+        <ul class="prose">
+          <li>第 1、3、5 行由插件发出，第 2、4 行由 Host 发出。</li>
+          <li><code>hello</code> 中的 <code>plugin_id</code>、<code>version</code> 和 <code>protocol</code> 必须与已安装的 manifest 一致。</li>
+          <li><code>ready</code> 必须回传 initialize 的 <code>request_id</code>。</li>
+          <li><code>ready</code> 之前发送事件是错误。</li>
+          <li><code>status</code> 只写入日志，不替代 Host 自己的进程状态机。状态以主程序为准。</li>
+        </ul>
+
+        <h3>Host → Plugin 消息</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>type / command</th><th>关键字段</th><th>说明</th></tr></thead>
+            <tbody>
+              <tr><td><code>initialize</code></td><td><code>request_id</code>, <code>protocol</code>, <code>permissions</code>, <code>config</code></td><td>握手第二阶段。传入本次运行已授权的权限和配置对象。插件应回复 <code>ready</code>。</td></tr>
+              <tr><td><code>command</code> / <code>start</code></td><td><code>request_id</code></td><td>开始工作。回复 <code>status: running</code>。</td></tr>
+              <tr><td><code>command</code> / <code>ping</code></td><td><code>request_id: "heartbeat"</code></td><td>每 5 秒一次。必须回复 <code>pong</code>。</td></tr>
+              <tr><td><code>command</code> / <code>configure</code></td><td><code>config</code></td><td>配置或测试命令。模板用 <code>{"emit_test":true}</code> 触发一次示例事件。</td></tr>
+              <tr><td><code>command</code> / <code>stop</code></td><td>无</td><td>释放资源、停止定时器、关闭连接并退出。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="codeblock" data-file="Host → Plugin" data-lang="jsonl"><pre><code class="language-plaintext">{"type":"initialize","request_id":"init","protocol":"gs-ipc/1.0","permissions":["events.emit"],"config":{"interval_ms":5000}}
+{"type":"command","command":"start","request_id":"start"}
+{"type":"command","command":"ping","request_id":"heartbeat"}
+{"type":"command","command":"configure","request_id":"test","config":{"emit_test":true}}
+{"type":"command","command":"stop"}</code></pre></div>
+
+        <h3>Plugin → Host 消息</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>type</th><th>关键字段</th><th>说明</th></tr></thead>
+            <tbody>
+              <tr><td><code>hello</code></td><td><code>plugin_id</code>, <code>version</code>, <code>protocol</code></td><td>进程启动后的第一条消息。与 manifest 不一致会被拒绝。</td></tr>
+              <tr><td><code>ready</code></td><td><code>request_id</code></td><td>初始化完成，回传 initialize 的 ID。</td></tr>
+              <tr><td><code>pong</code></td><td><code>request_id</code></td><td>原样回传 ping 的 ID。</td></tr>
+              <tr><td><code>status</code></td><td><code>state</code></td><td><code>running</code> 或 <code>stopped</code>。只用于日志和诊断。</td></tr>
+              <tr><td><code>event</code></td><td><code>event</code>, <code>data</code></td><td>发送业务事件。必须在 manifest 声明，并已授权 <code>events.emit</code>。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="codeblock" data-file="Plugin → Host" data-lang="jsonl"><pre><code class="language-plaintext">{"type":"hello","plugin_id":"com.example.demo-timer","version":"1.0.0","protocol":"gs-ipc/1.0"}
+{"type":"ready","request_id":"init"}
+{"type":"pong","request_id":"heartbeat"}
+{"type":"status","state":"running"}
+{"type":"event","event":"demo.timer.tick","data":{"interval_ms":5000,"at":1732473600000}}</code></pre></div>
+
+        <h3>事件消息</h3>
+        <p>事件消息只有两个业务字段：<code>event</code> 是 manifest 中声明的事件 ID，<code>data</code> 是附带的 JSON 对象。Host 会在下游补充可信的 <code>source</code> 与 <code>timestamp</code>。</p>
+        <ul class="prose">
+          <li>不要在 <code>data</code> 中伪造来源或时间戳；Host 不信任插件提供的来源身份。</li>
+          <li><code>data</code> 建议始终使用 JSON 对象，保持结构稳定，方便用户规则和后续版本兼容。</li>
+          <li>事件 data 上限 32 KiB。高频事件应先在自己的逻辑里去重或合并。</li>
+          <li>发送频率受每秒 100 条消息限制。队列满时 Host 会中止插件。</li>
+        </ul>
+
+        <h3>心跳与阻塞</h3>
+        <p>Host 每 5 秒发送 <code>ping</code>。插件必须在 15 秒内回复对应的 <code>pong</code>。同步死循环、长时间阻塞的 CPU 计算、同步文件或网络调用都会让 Node 事件循环停住，最终被 Host 终止。</p>
+        <div class="callout warning">
+          <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 21 20H3Z"/><path d="M12 9v5M12 17h.01"/></svg></div>
+          <div class="callout-body">
+            <strong>长任务要拆分</strong>
+            <p>屏幕处理、图像解码或大文件读取应使用异步 API，或分成小块在事件循环中执行。不要在 <code>line</code> 回调里做会持续数秒的同步计算。</p>
+          </div>
+        </div>
+
+        <h3>停止与异常</h3>
+        <p>收到 <code>stop</code> 后，插件应停止定时器、关闭连接、释放句柄，发送 <code>status: stopped</code>，然后以退出码 0 结束。Host 等待 2 秒；超时会强制终止，并通过 Windows Job Object 回收子进程树。</p>
+        <p>进程意外退出、协议错误和 JSON 解析错误都只影响当前插件。Host 不信任插件提供的错误码，也不会把错误码当作命令执行。</p>
+      </section>
+
+      <section class="doc-section" id="permissions">
+        <div class="section-eyebrow">规范 / Permissions</div>
+        <h2>权限模型</h2>
+        <p class="lead">权限是用户审核插件的依据，也是插件向用户说明数据访问范围的方式。它不是 Windows 安全边界。</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>权限</th><th>什么时候需要</th><th>建议</th></tr></thead>
+            <tbody>
+              <tr><td><code>events.emit</code></td><td>发送任何事件。</td><td>事件插件几乎都需要。没有它，所有 <code>event</code> 消息都会被拒绝。</td></tr>
+              <tr><td><code>screen.capture</code></td><td>读取屏幕、窗口或游戏画面像素。</td><td>明确说明捕获范围与频率。独占全屏可能无法捕获，无边框窗口更可靠。</td></tr>
+              <tr><td><code>filesystem.read</code></td><td>读取游戏日志、配置文件或本地状态。</td><td>只声明实际需要的目录。不要扫描与功能无关的用户文件。</td></tr>
+              <tr><td><code>filesystem.write</code></td><td>写缓存、日志或导出文件。</td><td>说明写入位置和用途，避免覆盖用户文件。</td></tr>
+              <tr><td><code>network.client</code></td><td>连接外部服务或本地网络接口。</td><td>披露目标地址、发送的数据和失败时的行为。</td></tr>
+              <tr><td><code>process.launch</code></td><td>启动辅助程序或子进程。</td><td>尽量合并到一个 EXE。退出时由 Job Object 回收进程树，不要启动脱离管理的长期进程。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>授权生命周期</h3>
+        <ol class="prose">
+          <li>首次安装不授予任何权限，也不会自动启动。</li>
+          <li>用户在<strong>配置与权限</strong>中逐项勾选，然后点击<strong>保存授权与配置</strong>。</li>
+          <li>保存会停止正在运行的插件；重新启动后，新的授权和配置才生效。</li>
+          <li>更新插件会保留用户配置，但清除旧授权并关闭自动启动。用户需要重新审核权限。</li>
+          <li>卸载会备份配置，不删除用户素材或触发规则。以同 ID 重装会恢复配置，但授权仍会被清除。</li>
+        </ol>
+
+        <div class="callout danger">
+          <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.4 3 8.2 7 9.5 4-1.3 7-5.1 7-9.5V6Z"/><path d="M12 8v4.5M12 16h.01"/></svg></div>
+          <div class="callout-body">
+            <strong>Native EXE 以当前用户身份运行</strong>
+            <p>勾选权限不会限制 Node 或你的 EXE 调用 Windows API。Job Object 用于退出时清理进程树，不是沙箱。只安装你信任的插件，也只分发你愿意让用户审核的代码。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="doc-section" id="lifecycle">
+        <div class="section-eyebrow">规范 / Lifecycle</div>
+        <h2>生命周期、更新与数据</h2>
+        <p class="lead">Host 维护插件进程的状态机。插件发送的 <code>status</code> 只用于日志，真正的启动、停止和错误状态由主程序决定。</p>
+
+        <div class="lifecycle" aria-label="插件状态流转">
+          <span class="pill">已安装</span><span class="pill-arrow">→</span>
+          <span class="pill accent">starting</span><span class="pill-arrow">→</span>
+          <span class="pill accent">running</span><span class="pill-arrow">→</span>
+          <span class="pill">stopping</span><span class="pill-arrow">→</span>
+          <span class="pill">stopped</span>
+          <span class="pill-arrow">·</span>
+          <span class="pill bad">error</span>
+        </div>
+        <p class="small muted">发生崩溃、协议错误、心跳超时或非法消息时进入 <code>error</code>。可以从 <code>stopped</code> 或 <code>error</code> 再次启动，但不能重复启动正在运行的插件。</p>
+
+        <h3>运行规则</h3>
+        <ul class="prose">
+          <li>每个插件独立进程，独立 stdin/stdout，独立队列和日志。</li>
+          <li>插件崩溃不会拖垮主程序或其他插件。</li>
+          <li>保存配置或权限会停止运行中的进程，重启后生效。</li>
+          <li>自动启动默认关闭。用户可以在配置页勾选<strong>随 GameSupport 启动</strong>。</li>
+          <li>主程序退出时会停止接收工作、清理快捷键、取消动画、停止音频，并等待插件结束。</li>
+        </ul>
+
+        <h3>更新流程</h3>
+        <ol class="steps" style="gap:1.15rem">
+          <li>
+            <h3>停止旧版本</h3>
+            <p>更新前必须先停止插件。运行中不能替换包目录。</p>
+          </li>
+          <li>
+            <h3>提升版本并重新构建</h3>
+            <p>同时修改 <code>build.mjs</code> 的 manifest 版本和 <code>plugin.cjs</code> 的 hello 版本，然后重新构建，生成新的哈希。</p>
+          </li>
+          <li>
+            <h3>通过“更新包”选择新目录</h3>
+            <p>在配置页点击<strong>更新包</strong>，选择包含新 <code>manifest.json</code> 的构建目录。</p>
+          </li>
+          <li>
+            <h3>Host 校验并替换</h3>
+            <p>要求同 ID、版本更高、全部文件哈希正确。校验和暂存完成后替换目录；常规失败会回滚旧包。</p>
+          </li>
+          <li>
+            <h3>用户重新授权</h3>
+            <p>更新保留配置，但清除授权并关闭自动启动。用户需要重新审核权限，再启动插件。</p>
+          </li>
+        </ol>
+
+        <div class="callout warning">
+          <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 21 20H3Z"/><path d="M12 9v5M12 17h.01"/></svg></div>
+          <div class="callout-body">
+            <strong>当前没有断电级事务恢复日志</strong>
+            <p>常规校验失败和目录替换失败会回滚。但如果在更新过程中断电或文件系统损坏，不能保证自动恢复。分发时提醒用户避免在更新期间强制关机。</p>
+          </div>
+        </div>
+
+        <h3>卸载与重装</h3>
+        <p>卸载前必须先停止插件。卸载会把配置备份到配置档，不删除用户导入的素材和触发规则。以相同 ID 重新安装会恢复配置，但权限仍需重新授予。</p>
+      </section>
+
+      <section class="doc-section" id="tutorial">
+        <div class="section-eyebrow">实践 / Tutorial</div>
+        <h2>教程：做一个计时器插件</h2>
+        <p class="lead">这个插件每隔一段时间发送 <code>demo.timer.tick</code>，间隔由用户在插件配置中填写。它覆盖了配置读取、定时器、心跳、测试命令和优雅停止。</p>
+
+        <div class="callout">
+          <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></svg></div>
+          <div class="callout-body">
+            <strong>完成后你会得到</strong>
+            <ul>
+              <li>一个可安装的 <code>build/demo-timer</code> 目录。</li>
+              <li>事件 <code>demo.timer.tick</code>，能绑定任意音效或动画。</li>
+              <li>可配置的间隔 <code>{"interval_ms":5000}</code>。</li>
+              <li>一条可以重复使用的构建、安装、更新流程。</li>
+            </ul>
+          </div>
+        </div>
+
+        <ol class="steps">
+          <li>
+            <h3>复制模板并确定身份</h3>
+            <p>复制模板目录，为插件选择一个不会被别人使用的反向域名 ID。本教程使用 <code>com.example.demo-timer</code>，发布前请换成你自己的域名。</p>
+            <p>需要保持同步的三处信息：</p>
+            <div class="table-wrap">
+              <table class="compact">
+                <thead><tr><th>位置</th><th>需要修改</th></tr></thead>
+                <tbody>
+                  <tr><td><code>build.mjs</code></td><td>输出目录、<code>id</code>、<code>name</code>、<code>version</code>、<code>events</code> 和权限。</td></tr>
+                  <tr><td><code>plugin.cjs</code></td><td>hello 中的 <code>plugin_id</code> 与 <code>version</code>。</td></tr>
+                  <tr><td><code>README.md</code></td><td>功能、权限用途、数据访问和配置说明。</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </li>
+
+          <li>
+            <h3>写入插件逻辑</h3>
+            <p>用下面的内容替换 <code>plugin.cjs</code>。代码只使用 Node 内置模块，不需要 npm 安装。</p>
+            <div class="codeblock" data-file="plugin.cjs" data-lang="javascript"><pre><code class="language-javascript">// stdout 只允许 GS-IPC JSON。日志一律走 stderr。
+const readline = require('node:readline');
+
+const send = (message) => process.stdout.write(`${JSON.stringify(message)}\n`);
+
+let initialized = false;
+let running = false;
+let canEmit = false;
+let timer = null;
+let intervalMs = 60_000;
+
+function stopTimer() {
+  if (timer !== null) {
+    clearInterval(timer);
+    timer = null;
+  }
+}
+
+function emitTick() {
+  if (!running || !canEmit) return;
+  send({
+    type: 'event',
+    event: 'demo.timer.tick',
+    data: { interval_ms: intervalMs, at: Date.now() },
+  });
+}
+
+function startTimer() {
+  stopTimer();
+  timer = setInterval(emitTick, intervalMs);
+}
+
+send({
+  type: 'hello',
+  plugin_id: 'com.example.demo-timer',
+  version: '1.0.0',
+  protocol: 'gs-ipc/1.0',
+});
+
+const rl = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });
+
+rl.on('line', (line) => {
+  let message;
+  try {
+    message = JSON.parse(line);
+  } catch (error) {
+    console.error(`Invalid JSON: ${error.message}`);
+    return;
+  }
+
+  try {
+    if (message.type === 'initialize') {
+      if (initialized || message.protocol !== 'gs-ipc/1.0') {
+        throw new Error('Invalid initialize');
+      }
+      initialized = true;
+      canEmit = Array.isArray(message.permissions) && message.permissions.includes('events.emit');
+
+      const requested = Number(message.config?.interval_ms);
+      if (Number.isFinite(requested) && requested >= 1_000 && requested &lt;= 3_600_000) {
+        intervalMs = requested;
+      }
+      send({ type: 'ready', request_id: message.request_id });
+      return;
+    }
+
+    if (message.type !== 'command') return;
+
+    switch (message.command) {
+      case 'start':
+        if (!initialized) throw new Error('Initialize first');
+        if (running) break;
+        running = true;
+        send({ type: 'status', state: 'running' });
+        startTimer();
+        break;
+
+      case 'ping':
+        send({ type: 'pong', request_id: message.request_id });
+        break;
+
+      case 'configure':
+        if (message.config?.emit_test === true) emitTick();
+        break;
+
+      case 'stop':
+        running = false;
+        stopTimer();
+        process.stdout.write(`${JSON.stringify({ type: 'status', state: 'stopped' })}\n`, () =>
+          process.exit(0),
+        );
+        break;
+
+      default:
+        console.error(`Unknown command: ${message.command}`);
+    }
+  } catch (error) {
+    console.error(error.message);
+    process.exit(1);
+  }
+});
+
+rl.on('close', () => {
+  stopTimer();
+  process.exit(0);
+});</code></pre></div>
+          </li>
+
+          <li>
+            <h3>理解关键点</h3>
+            <ul class="prose">
+              <li><strong>先 hello，再读 stdin。</strong>Host 需要立即知道插件身份。hello 的 ID 和版本必须与 manifest 一致。</li>
+              <li><strong>用 <code>canEmit</code> 检查授权。</strong>initialize 传入本次已授权的权限列表。没有 <code>events.emit</code> 就不发送事件。</li>
+              <li><strong>配置只信任合法范围。</strong>间隔限制在 1 秒到 1 小时之间，避免用户填入负数或过小的值导致消息洪泛。</li>
+              <li><strong>先报告 running，再启动定时器。</strong>让 Host 的日志顺序清晰。定时器只在 <code>running</code> 且 <code>canEmit</code> 时发送。</li>
+              <li><strong>测试命令复用同一个发送函数。</strong><code>configure</code> 中的 <code>emit_test</code> 只触发一次，不改变定时器。</li>
+              <li><strong>停止时先写 status，再退出。</strong>写入回调里调用 <code>process.exit(0)</code>，避免消息还没刷出就被切断。</li>
+              <li><strong>关闭 stdin 也要清理。</strong>Host 进程结束时，<code>close</code> 回调负责清理定时器。</li>
+            </ul>
+          </li>
+
+          <li>
+            <h3>修改构建脚本的清单信息</h3>
+            <p>至少修改输出目录、插件身份、事件和权限。下面的片段展示了与模板不同的部分。</p>
+            <div class="codeblock" data-file="build.mjs（片段）" data-lang="javascript"><pre><code class="language-javascript">const output = path.resolve(source, 'build/demo-timer');
+
+// ...
+
+const manifest = {
+  manifest_version: 1,
+  id: 'com.example.demo-timer',
+  name: 'Demo Timer',
+  version: '1.0.0',
+  author: 'Your Name',
+  description: '按固定间隔发送 demo.timer.tick 事件。',
+  type: 'event_provider',
+  runtime: {
+    type: 'native',
+    os: ['windows'],
+    arch: ['x86_64'],
+    executable: 'bin/launcher.exe',
+    protocol: 'gs-ipc/1.0',
+  },
+  permissions: ['events.emit'],
+  events: [{ id: 'demo.timer.tick', name: '计时器滴答' }],
+  files: {},
+};</code></pre></div>
+            <p>文件的复制与哈希循环保持模板原样。新增任何随包文件时，也要把它加入这个循环，否则清单会漏文件。</p>
+          </li>
+
+          <li>
+            <h3>构建</h3>
+            <div class="codeblock" data-file="powershell" data-lang="powershell"><pre><code class="language-powershell">node build.mjs</code></pre></div>
+            <p>构建成功后会生成 <code>build/demo-timer</code>。确认目录里同时存在 <code>manifest.json</code>、<code>plugin.cjs</code>、<code>bin/launcher.exe</code> 和 <code>bin/node.exe</code>。任一项缺失都不要安装。</p>
+          </li>
+
+          <li>
+            <h3>安装、授权并填写配置</h3>
+            <p>在插件中心安装构建目录，打开<strong>配置与权限</strong>，勾选 <code>events.emit</code>。在配置文本框中写入：</p>
+            <div class="codeblock" data-file="插件配置" data-lang="json"><pre><code class="language-json">{ "interval_ms": 5000 }</code></pre></div>
+            <p>点击<strong>保存授权与配置</strong>，然后点击<strong>启动</strong>。配置会通过 initialize 的 <code>config</code> 字段传入插件；保存操作会停止进程，所以必须重新启动才能生效。</p>
+          </li>
+
+          <li>
+            <h3>创建触发规则</h3>
+            <p>在触发中心新建规则，事件标识填写 <code>demo.timer.tick</code>，加入音效或动画并保存。规则的事件 ID 必须与 manifest 和插件发送的 ID 完全一致，包括大小写和点号。</p>
+          </li>
+
+          <li>
+            <h3>验证两条路径</h3>
+            <ul class="prose">
+              <li><strong>测试按钮：</strong>点击<strong>请求测试事件</strong>，Host 发送 <code>configure</code>，插件立即发送一次事件。</li>
+              <li><strong>定时器：</strong>启动后等待 5 秒，插件按 <code>interval_ms</code> 自动发送。</li>
+            </ul>
+            <p>确认事件记录出现、音效或动画实际执行，并让插件持续运行 30 秒以上，观察心跳是否稳定。</p>
+          </li>
+
+          <li>
+            <h3>修改并发布新版本</h3>
+            <p>把 <code>build.mjs</code> 和 <code>plugin.cjs</code> 中的版本同时改成 <code>1.1.0</code>，重新构建，然后在已安装插件上停止旧版本，点击<strong>更新包</strong>选择新目录。更新后会清除授权，需要重新勾选 <code>events.emit</code> 再启动。</p>
+          </li>
+        </ol>
+
+        <div class="callout tip">
+          <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m4 12.5 5 5L20 6.5"/></svg></div>
+          <div class="callout-body">
+            <strong>把手工步骤变成清单</strong>
+            <p>每次发布前检查：ID 未变、版本已提升、hello 与 manifest 一致、事件已声明、权限最小、重新构建过、更新后重新授权。把这六项写进 README，能避免大多数“更新后不工作”的问题。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="doc-section" id="build">
+        <div class="section-eyebrow">实践 / Build</div>
+        <h2>构建、打包与完整性</h2>
+        <p class="lead">模板的构建脚本只做六件事：编译启动器、复制 Node 运行时、复制插件逻辑、生成清单、计算哈希、打印安装目录。</p>
+
+        <h3>构建脚本做了什么</h3>
+        <ol class="prose">
+          <li>检查构建机是否为 Windows x64，避免产出无法运行的包。</li>
+          <li>用 Go 编译 <code>launcher.go</code>，目标为 Windows amd64，关闭 CGO。</li>
+          <li>把当前 <code>node.exe</code> 和它的许可文本复制到 <code>bin/</code> 与包根目录。</li>
+          <li>复制 <code>plugin.cjs</code>。</li>
+          <li>写入 manifest 的 ID、版本、运行时、权限和事件。</li>
+          <li>对包内四个运行文件计算 SHA-256，写入 <code>files</code>，最后生成 <code>manifest.json</code>。</li>
+        </ol>
+
+        <div class="codeblock" data-file="build.mjs" data-lang="javascript"><pre><code class="language-javascript">import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+
+if (process.platform !== 'win32' || process.arch !== 'x64') {
+  throw Error('Build with Windows x64 Node.js.');
+}
+
+const source = path.dirname(fileURLToPath(import.meta.url));
+const output = path.resolve(source, 'build/demo-timer');
+fs.mkdirSync(path.join(output, 'bin'), { recursive: true });
+
+const result = spawnSync(
+  'go',
+  [
+    'build',
+    '-trimpath',
+    '-ldflags=-s -w',
+    '-o',
+    path.join(output, 'bin/launcher.exe'),
+    path.join(source, 'launcher.go'),
+  ],
+  {
+    stdio: 'inherit',
+    env: { ...process.env, GOOS: 'windows', GOARCH: 'amd64', CGO_ENABLED: '0' },
+  },
+);
+if (result.error) throw result.error;
+if (result.status !== 0) process.exit(result.status ?? 1);
+
+fs.copyFileSync(process.execPath, path.join(output, 'bin/node.exe'));
+fs.copyFileSync(
+  path.join(path.dirname(process.execPath), 'LICENSE'),
+  path.join(output, 'NODE-LICENSE.txt'),
+);
+fs.copyFileSync(path.join(source, 'plugin.cjs'), path.join(output, 'plugin.cjs'));
+
+const manifest = {
+  manifest_version: 1,
+  id: 'com.example.demo-timer',
+  name: 'Demo Timer',
+  version: '1.0.0',
+  author: 'Your Name',
+  description: '按固定间隔发送 demo.timer.tick 事件。',
+  type: 'event_provider',
+  runtime: {
+    type: 'native',
+    os: ['windows'],
+    arch: ['x86_64'],
+    executable: 'bin/launcher.exe',
+    protocol: 'gs-ipc/1.0',
+  },
+  permissions: ['events.emit'],
+  events: [{ id: 'demo.timer.tick', name: '计时器滴答' }],
+  files: {},
+};
+
+for (const name of ['bin/launcher.exe', 'bin/node.exe', 'plugin.cjs', 'NODE-LICENSE.txt']) {
+  manifest.files[name] = createHash('sha256')
+    .update(fs.readFileSync(path.join(output, name)))
+    .digest('hex');
+}
+
+fs.writeFileSync(
+  path.join(output, 'manifest.json'),
+  `${JSON.stringify(manifest, null, 2)}\n`,
+);
+console.log(`Install this folder in GameSupport: ${output}`);</code></pre></div>
+
+        <h3>启动器</h3>
+        <p>Host 只接受 EXE 入口，并且不传命令行参数。启动器的工作是把标准输入输出原样转发给随包的 Node。它不解析协议，也不做业务逻辑。</p>
+        <div class="codeblock" data-file="launcher.go" data-lang="go"><pre><code class="language-go">package main
+
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"syscall"
+)
+
+func main() {
+	exe, err := os.Executable()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	bin := filepath.Dir(exe)
+	child := exec.Command(filepath.Join(bin, "node.exe"), filepath.Join(bin, "..", "plugin.cjs"))
+	child.Stdin, child.Stdout, child.Stderr = os.Stdin, os.Stdout, os.Stderr
+	child.SysProcAttr = &amp;syscall.SysProcAttr{HideWindow: true}
+	if err := child.Run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}</code></pre></div>
+        <p>启动器用自身 EXE 所在目录解析 <code>node.exe</code> 和 <code>plugin.cjs</code>，因此插件包被安装到任何用户目录都能运行。Node 退出后，启动器以非零状态退出，Host 会把插件标记为错误。</p>
+
+        <h3>构建产物</h3>
+        <div class="codeblock" data-file="build/demo-timer" data-lang="text"><pre><code class="language-plaintext">build/demo-timer/
+├─ manifest.json
+├─ plugin.cjs
+├─ NODE-LICENSE.txt
+└─ bin/
+   ├─ launcher.exe
+   └─ node.exe</code></pre></div>
+        <p>安装时选择这个目录本身，也就是包含 <code>manifest.json</code> 的目录。选择上级目录，Host 找不到清单，会直接拒绝安装。</p>
+
+        <h3>发布前检查</h3>
+        <div class="table-wrap">
+          <table class="compact">
+            <thead><tr><th>检查</th><th>通过标准</th></tr></thead>
+            <tbody>
+              <tr><td>身份</td><td>ID 与上一版相同；版本已提升；hello 与 manifest 一致。</td></tr>
+              <tr><td>事件</td><td>所有发送的事件都在 manifest 中声明；没有重命名旧事件。</td></tr>
+              <tr><td>权限</td><td>只声明实际需要的最小集合；README 说明了用途。</td></tr>
+              <tr><td>完整性</td><td>构建后在安装目录运行，没有手动改文件；<code>files</code> 覆盖全部包内文件。</td></tr>
+              <tr><td>运行时</td><td>Windows x64；Node 版本与目标环境一致；许可文本已附带。</td></tr>
+              <tr><td>稳定性</td><td>连续运行 30 秒以上不掉线；停止后 2 秒内退出。</td></tr>
+              <tr><td>更新</td><td>旧版停止后能更新到新版；配置保留；授权按预期清除。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout warning">
+          <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 21 20H3Z"/><path d="M12 9v5M12 17h.01"/></svg></div>
+          <div class="callout-body">
+            <strong>每次修改都要重新构建并提升版本</strong>
+            <p>Host 会按 manifest 校验哈希。修改 <code>plugin.cjs</code> 后直接覆盖安装目录，启动会被拒绝。正确做法是重新构建、提升版本、停止旧插件、通过“更新包”安装。</p>
+          </div>
+        </div>
+
+        <h3>Node 运行时与许可</h3>
+        <p>包体会包含完整的 <code>node.exe</code>，不是小体积单文件程序。分发时应保留 Node 的许可文本，并遵守所使用 Node 发行版的第三方声明要求。不要删除 <code>NODE-LICENSE.txt</code>，也不要用来源不明的 <code>node.exe</code> 替换随包运行时。</p>
+      </section>
+
+      <section class="doc-section" id="testing">
+        <div class="section-eyebrow">实践 / Testing</div>
+        <h2>测试与调试</h2>
+        <p class="lead">先验证协议，再验证业务。大多数问题不是“事件没发出去”，而是插件根本没有进入 running，或者规则绑定的事件 ID 不一致。</p>
+
+        <h3>主程序内测试</h3>
+        <ul class="prose">
+          <li>插件启动后，配置页的<strong>请求测试事件</strong>按钮才可用。它会发送 <code>configure</code>，模板将其解释为“立即发送一次示例事件”。</li>
+          <li>插件日志显示状态、协议错误和 stderr 输出。日志只保留状态或错误变化的持久记录，避免每秒状态淹没事件日志。</li>
+          <li>事件记录中的<strong>已调度</strong>表示动作进入队列。音频设备错误或动画执行错误会另行写入日志，不等同于播放成功。</li>
+        </ul>
+
+        <h3>直接运行插件逻辑</h3>
+        <p>在构建目录中，可以用一行 initialize 直接喂给 Node，检查 hello、ready 和 JSON 解析是否正常。这个方式绕过 Host 的授权与完整性校验，只用于本地调试。</p>
+        <div class="codeblock" data-file="powershell（本地调试）" data-lang="powershell"><pre><code class="language-powershell">'{"type":"initialize","request_id":"init","protocol":"gs-ipc/1.0","permissions":["events.emit"],"config":{"interval_ms":5000}}' | node plugin.cjs</code></pre></div>
+        <p>stdout 应出现 <code>hello</code> 和 <code>ready</code>。管道关闭后进程退出，不会收到 start。这个检查只能证明握手代码没有语法错误，不能替代主程序集成测试。</p>
+
+        <h3>协议调试脚本</h3>
+        <p>如果你在 GameSupport 源码仓库中开发，可以使用协议调试脚本启动一个受信任的本地插件包，观察完整握手、心跳、事件和停止流程。</p>
+        <div class="codeblock" data-file="powershell" data-lang="powershell"><pre><code class="language-powershell">./scripts/ipc-debug.ps1 -PluginDirectory ./build/javascript-example</code></pre></div>
+        <div class="callout danger">
+          <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.4 3 8.2 7 9.5 4-1.3 7-5.1 7-9.5V6Z"/><path d="M12 8v4.5M12 16h.01"/></svg></div>
+          <div class="callout-body">
+            <strong>调试脚本会直接执行指定 EXE</strong>
+            <p>只对你自己的或已经审核过的本地开发包使用。不要把来历不明的插件目录传给调试脚本。</p>
+          </div>
+        </div>
+
+        <h3>验收清单</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>场景</th><th>预期结果</th></tr></thead>
+            <tbody>
+              <tr><td>安装</td><td>插件出现在插件中心，显示正确的名称、版本和事件。</td></tr>
+              <tr><td>首次启动</td><td>未授权时拒绝启动；授权后进入 running。</td></tr>
+              <tr><td>心跳</td><td>连续运行 30 秒以上不被终止。</td></tr>
+              <tr><td>测试事件</td><td>点击按钮后事件记录出现，绑定的音效或动画执行。</td></tr>
+              <tr><td>业务事件</td><td>真实检测条件满足时发送事件，频率符合预期。</td></tr>
+              <tr><td>停止</td><td>点击停止后 2 秒内退出，没有残留子进程。</td></tr>
+              <tr><td>配置</td><td>保存配置会停止进程；重新启动后使用新配置。</td></tr>
+              <tr><td>更新</td><td>同 ID、更高版本可更新；配置保留；授权清除。</td></tr>
+              <tr><td>完整性</td><td>修改包内文件后，安装或启动被拒绝。</td></tr>
+              <tr><td>隔离</td><td>插件崩溃、发送非法 JSON 或超过速率限制时，主程序继续运行。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>常见调试手法</h3>
+        <ul class="prose">
+          <li>临时把收到的消息类型打到 stderr：<code>console.error(message.type, message.command ?? '')</code>。不要打到 stdout。</li>
+          <li>在关键分支记录自己的状态：初始化、授权、启动、定时器触发、停止。</li>
+          <li>检查退出码。Host 会把异常退出记录为插件错误；反复重启说明进程在启动早期失败。</li>
+          <li>确认事件 ID 完全一致，包括大小写、点和下划线。规则不会模糊匹配。</li>
+          <li>确认 manifest 的 <code>events</code> 与代码中发送的 ID 一致，且已授权 <code>events.emit</code>。</li>
+          <li>检查是否有同步长任务阻塞事件循环，导致无法回复 pong。</li>
+          <li>停止时清理所有定时器、文件句柄、网络连接和子进程。</li>
+        </ul>
+      </section>
+
+      <section class="doc-section" id="distribution">
+        <div class="section-eyebrow">实践 / Distribution</div>
+        <h2>分发与审核边界</h2>
+        <p class="lead">当前版本提供本地开发安装通道。它不是面向任意第三方 EXE 的公开市场，也没有自动恶意软件扫描、证书信任库或审核签名链。</p>
+
+        <div class="callout danger">
+          <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.4 3 8.2 7 9.5 4-1.3 7-5.1 7-9.5V6Z"/><path d="M12 8v4.5M12 16h.01"/></svg></div>
+          <div class="callout-body">
+            <strong>不要把它当作公开 EXE 市场</strong>
+            <p>本地安装会校验 manifest 和哈希，但不会替你判断代码是否恶意。分发前请自行完成代码审查、依赖审查和签名策略。社区 Native 包默认不放行。</p>
+          </div>
+        </div>
+
+        <h3>发布包应该包含</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>内容</th><th>用途</th></tr></thead>
+            <tbody>
+              <tr><td><code>manifest.json</code></td><td>身份、事件、权限和完整性清单。</td></tr>
+              <tr><td><code>plugin.cjs</code></td><td>插件逻辑。</td></tr>
+              <tr><td><code>bin/launcher.exe</code></td><td>Host 启动入口。</td></tr>
+              <tr><td><code>bin/node.exe</code></td><td>随包 Node 运行时。</td></tr>
+              <tr><td><code>NODE-LICENSE.txt</code></td><td>运行时许可文本。</td></tr>
+              <tr><td><code>README.md</code></td><td>功能、权限用途、数据访问、配置示例和卸载说明。</td></tr>
+              <tr><td>版本说明</td><td>新增事件、修复内容、破坏性变化和重新授权提示。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>README 至少写清楚</h3>
+        <ul class="prose">
+          <li>插件读取哪些数据、访问哪些目录、是否联网。</li>
+          <li>每个权限为什么需要，尤其是 <code>screen.capture</code> 和 <code>filesystem.read</code>。</li>
+          <li>发送哪些事件，事件 ID 和含义。</li>
+          <li>配置字段、取值范围和默认值。</li>
+          <li>如何停止、卸载，以及更新后会清除授权。</li>
+          <li>已知限制，例如独占全屏无法截图、只支持特定游戏版本。</li>
+        </ul>
+
+        <h3>内容市场与 Native 审核</h3>
+        <p>GameSupport 的内容市场可以发布免费素材包，支持本机测试审核和已部署的服务端。Native 插件的边界更严格：</p>
+        <ul class="prose">
+          <li>上传只保存和校验包，<strong>不会执行上传的 EXE</strong>。</li>
+          <li>Native 包提交后保持待审核，不会仅凭页面按钮通过。</li>
+          <li>审核通过还需要运营方把已完成独立安全与签名审核的整包 ZIP 哈希加入受信任清单，重启服务后才可批准。</li>
+          <li>市场包不能覆盖应用内置插件。</li>
+          <li>默认不放行任何社区 Native 包。</li>
+        </ul>
+        <p>这些限制是审核策略，不是自动扫描服务。发布者仍需要自行保证代码、依赖和更新链路的安全。</p>
+      </section>
+
+      <section class="doc-section" id="security">
+        <div class="section-eyebrow">实践 / Security</div>
+        <h2>安全须知</h2>
+        <p class="lead">插件以当前 Windows 用户身份运行。权限勾选表达的是用户信任，不是操作系统层面的隔离。写插件时要把这一点当作前提。</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.4 3 8.2 7 9.5 4-1.3 7-5.1 7-9.5V6Z"/><path d="m9 12 2 2 4-4"/></svg></span>
+            <h4>最小权限</h4>
+            <p>只声明功能真正需要的权限。能读一个日志文件，就不要申请整个磁盘；能本地处理，就不要联网。</p>
+          </div>
+          <div class="card">
+            <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 4 12l5 8M15 4l5 8-5 8"/></svg></span>
+            <h4>校验输入</h4>
+            <p>配置、文件名、网络响应和游戏日志都可能包含意外内容。限制长度、类型和范围，不要直接拼命令或路径。</p>
+          </div>
+          <div class="card">
+            <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h7"/><path d="m17 15 3 3-3 3"/></svg></span>
+            <h4>保护 stdout</h4>
+            <p>只写协议 JSON。第三方库如果默认打印日志，把它重定向到 stderr，否则插件会被判定为协议错误。</p>
+          </div>
+          <div class="card">
+            <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14v12H5zM8 7V4h8v3"/><path d="M9 12h6"/></svg></span>
+            <h4>清理资源</h4>
+            <p>停止时清除定时器、关闭连接、释放句柄。不要启动脱离管理的长期子进程；Job Object 只回收进程树。</p>
+          </div>
+          <div class="card">
+            <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+            <h4>不要带密钥</h4>
+            <p>插件包会被用户完整安装和校验。不要把 API 密钥、令牌或私有证书放进包里，也不要写进日志。</p>
+          </div>
+          <div class="card">
+            <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="m7 14 3-3 3 2 4-5"/></svg></span>
+            <h4>供应链安全</h4>
+            <p>锁定依赖版本，审查 npm 包和二进制来源。分发前重新构建，避免把开发机上的临时文件带进包。</p>
+          </div>
+        </div>
+
+        <h3>用户数据与隐私</h3>
+        <ul class="prose">
+          <li>只采集功能必需的数据。采集屏幕画面时，明确说明是否落盘、保存多久、如何删除。</li>
+          <li>日志可能包含用户目录、游戏状态或账号信息。默认不要上传，也不要写入插件包目录。</li>
+          <li>联网功能要提供失败路径。网络不可用时，插件不应崩溃或无限重试。</li>
+          <li>不要修改用户的游戏文件或系统配置，除非这是插件明确声明并被用户授权的功能。</li>
+        </ul>
+
+        <div class="callout">
+          <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></svg></div>
+          <div class="callout-body">
+            <strong>权限声明的价值在于可审核</strong>
+            <p>用户看到的不是你的代码，而是 manifest、README 和权限列表。把它们写清楚，比在代码里“尽量少做坏事”更能建立信任。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="doc-section" id="troubleshooting">
+        <div class="section-eyebrow">参考 / Troubleshooting</div>
+        <h2>故障排查</h2>
+        <p class="lead">按“安装 → 启动 → 心跳 → 事件 → 规则 → 播放”的顺序定位。先确认插件进程是否健康，再检查事件绑定，最后才怀疑音频或动画模块。</p>
+
+        <div class="faq">
+          <div class="faq-item">
+            <h3>安装时提示清单无效或 Schema 校验失败</h3>
+            <p>清单不允许未定义字段。逐项检查：<code>manifest_version</code> 是否为 1，ID 是否为至少三段的小写反向域名，版本是否符合 SemVer，<code>runtime</code> 是否包含全部五个字段，权限是否在六种枚举内，事件 ID 是否只含小写字母、数字、下划线和点。</p>
+            <p>先用 <a href="#resources">manifest.schema.json</a> 校验，再重新构建。不要手工修补安装目录里的清单，哈希会立即失效。</p>
+          </div>
+
+          <div class="faq-item">
+            <h3>安装时提示文件哈希不匹配或缺少文件</h3>
+            <p>常见原因是修改了 <code>plugin.cjs</code> 但没有重新构建，或者新增了文件却没有加入 <code>files</code> 哈希。删除旧的构建目录，重新运行 <code>node build.mjs</code>，再安装新目录。</p>
+            <p>如果哈希清单里包含 <code>NODE-LICENSE.txt</code>，确认它确实被复制到了包根目录。任何包内文件都在校验范围内。</p>
+          </div>
+
+          <div class="faq-item">
+            <h3>启动后立即变成错误或停止</h3>
+            <p>先看插件日志。常见原因：</p>
+            <ul>
+              <li>启动器找不到 <code>bin/node.exe</code> 或 <code>plugin.cjs</code>，包结构不完整。</li>
+              <li>hello 中的 <code>plugin_id</code> 或 <code>version</code> 与 manifest 不一致。</li>
+              <li>进程在 5 秒内没有发出 hello，或 Node 语法错误导致启动失败。</li>
+              <li>stdout 输出了普通日志，Host 把第一行当成非法协议消息。</li>
+            </ul>
+            <p>在构建目录直接运行 Node 做握手冒烟测试，能把“协议代码错误”和“安装包问题”分开。</p>
+          </div>
+
+          <div class="faq-item">
+            <h3>运行几秒后被自动终止</h3>
+            <p>这是心跳超时的典型表现。Host 每 5 秒发送 ping，15 秒内没有 pong 就会终止插件。检查是否有同步死循环、长时间 CPU 计算、同步文件读取或阻塞式网络请求占住了事件循环。</p>
+            <p>也可能是发送频率超过每秒 100 条消息，或队列满。把高频事件去重、合并或降到合理频率。</p>
+          </div>
+
+          <div class="faq-item">
+            <h3>点击“请求测试事件”没有反应</h3>
+            <ul>
+              <li>插件必须处于 running，测试按钮在停止状态下不可用。</li>
+              <li>你的插件需要处理 <code>configure</code> 命令。模板用 <code>emit_test</code> 触发一次发送；如果你删掉了这段逻辑，测试按钮不会产生事件。</li>
+              <li>检查 <code>canEmit</code> 是否为 true，也就是 initialize 的权限列表是否包含 <code>events.emit</code>。</li>
+              <li>检查事件是否在 manifest 中声明，以及是否已经创建规则。</li>
+            </ul>
+          </div>
+
+          <div class="faq-item">
+            <h3>事件记录有内容，但没有声音或动画</h3>
+            <ul>
+              <li>规则是否保存并启用，事件 ID 是否与插件发送的完全一致。</li>
+              <li>规则里是否加入了音效或动画动作，延迟、冷却和次数上限是否合理。</li>
+              <li>主程序是否处于暂停状态，音量为零，或输出设备不可用。</li>
+              <li>事件记录中的“已调度”只表示进入队列；实际播放错误会写入日志。</li>
+            </ul>
+          </div>
+
+          <div class="faq-item">
+            <h3>修改代码后行为没有变化</h3>
+            <p>Host 运行的是已安装目录中的副本，不是你源码目录里的文件。修改后必须重新构建、提升版本、停止旧插件、通过“更新包”安装新包，然后重新授权并启动。</p>
+            <p>直接编辑用户插件目录会破坏完整性校验，不是支持的工作流。</p>
+          </div>
+
+          <div class="faq-item">
+            <h3>更新失败或提示版本不够高</h3>
+            <p>更新要求同 ID、版本严格更高、所有文件哈希正确，并且旧插件已经停止。最常见的原因是只改了 manifest 版本，忘了改 <code>plugin.cjs</code> 的 hello 版本，或者没有重新构建导致哈希还是旧的。</p>
+            <p>把两个版本号同时提升，重新构建，再选择新目录更新。</p>
+          </div>
+
+          <div class="faq-item">
+            <h3>保存配置后插件停止了</h3>
+            <p>这是预期行为。保存配置或权限会停止运行中的进程，让新设置在下次启动时通过 initialize 生效。重新点击启动即可。</p>
+          </div>
+
+          <div class="faq-item">
+            <h3>勾选了权限，插件仍然说没有授权</h3>
+            <p>Host 同时检查两件事：manifest 是否声明了该权限，以及用户是否授予了该权限。只在配置页勾选但 manifest 没声明，保存会被拒绝或不会生效。</p>
+            <p>确认点击的是<strong>保存授权与配置</strong>，并且进程已经重启。更新插件后旧授权会被清除，需要重新勾选。</p>
+          </div>
+
+          <div class="faq-item">
+            <h3>中文日志乱码或 JSON 解析失败</h3>
+            <p>协议要求 UTF-8。用 <code>JSON.stringify()</code> 生成消息，不要手拼字符串。日志写 stderr，不要在 stdout 输出中文提示行。</p>
+            <p>读取外部文件时显式指定 UTF-8，避免把控制台编码或 BOM 带进协议消息。每条消息必须以 LF 结尾。</p>
+          </div>
+
+          <div class="faq-item">
+            <h3>能不能直接安装一个 .js 文件</h3>
+            <p>不能。当前 Host 的入口必须是包内的 <code>.exe</code>，且启动时不传参数。模板的 <code>launcher.exe</code> 就是为了把 Node 包进 Native 插件模型。</p>
+          </div>
+
+          <div class="faq-item">
+            <h3>插件能不能自己播放音效或显示动画</h3>
+            <p>不建议，也不是这套模型的设计。插件只发送事件；用户通过触发规则选择音效和动画。这样用户拥有最终控制权，插件也不需要接触播放器和素材目录。</p>
+          </div>
+
+          <div class="faq-item">
+            <h3>需要开启本地 HTTP API 吗</h3>
+            <p>不需要。插件走 stdin/stdout。本地 HTTP API 是给外部程序调用 Event Bus 的另一条通道，与插件协议无关。</p>
+          </div>
+
+          <div class="faq-item">
+            <h3>支持 32 位、ARM 或 Linux 吗</h3>
+            <p>当前只支持 Windows x64。manifest 的运行时声明固定为 <code>os: ["windows"]</code> 和 <code>arch: ["x86_64"]</code>。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="doc-section" id="compatibility">
+        <div class="section-eyebrow">参考 / Compatibility</div>
+        <h2>兼容性与版本策略</h2>
+        <p class="lead">插件、Host 和协议各有版本。它们不要求数字相同，但必须满足清单与协议声明的约束。</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>组件</th><th>当前版本</th><th>约束</th></tr></thead>
+            <tbody>
+              <tr><td>GameSupport</td><td>0.4.x</td><td>插件系统的宿主。本文档按 0.4.x 的实际行为编写。</td></tr>
+              <tr><td>Plugin SDK</td><td>1.0</td><td>manifest 与原生插件运行模型。</td></tr>
+              <tr><td>GS-IPC</td><td>1.0</td><td>hello 与 initialize 中的 <code>protocol</code> 必须是 <code>gs-ipc/1.0</code>。</td></tr>
+              <tr><td>manifest_version</td><td>1</td><td>固定值，不是插件版本。</td></tr>
+              <tr><td>操作系统</td><td>Windows 10 / 11 x64</td><td>不支持 32 位、ARM 或 Linux。</td></tr>
+              <tr><td>构建环境</td><td>Node.js 22+、Go</td><td>仅构建机需要。最终用户使用随包运行时。</td></tr>
+              <tr><td>运行时</td><td>随包 Node</td><td>最终用户不需要安装 Node 或 Go。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>版本规则</h3>
+        <ul class="prose">
+          <li><strong>插件版本</strong>使用 SemVer。更新必须同 ID 且严格更高；降级被拒绝。</li>
+          <li><strong>协议版本</strong>必须精确匹配。Host 当前只接受 <code>gs-ipc/1.0</code>。</li>
+          <li><strong>清单版本</strong>固定为 1。未来若变更格式，会通过新的 manifest_version 区分。</li>
+          <li><strong>事件 ID</strong>是兼容性契约。新增事件是安全变化；重命名或删除是破坏性变化。</li>
+          <li><strong>破坏性变化</strong>应提升插件主版本，并在 README 与版本说明中明确写出迁移方式。</li>
+          <li><strong>废弃事件</strong>建议至少保留一个次版本周期，先停止文档推荐，再在下个主版本移除。</li>
+        </ul>
+
+        <h3>当前实现边界</h3>
+        <ul class="prose">
+          <li>只支持 Native EXE 入口，不支持 WASM 或直接以 JS 文件作为入口。</li>
+          <li>没有公共 Native 插件市场，没有自动恶意软件扫描或证书信任库。</li>
+          <li>没有审核签名链；Native 包默认不放行，需独立审核后加入受信任哈希清单。</li>
+          <li>更新有常规失败回滚，但没有断电级跨文件系统事务恢复日志。</li>
+          <li>权限是运行策略与审核记录，不能约束 EXE 的 Windows 权限。</li>
+        </ul>
+
+        <div class="callout warning">
+          <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 21 20H3Z"/><path d="M12 9v5M12 17h.01"/></svg></div>
+          <div class="callout-body">
+            <strong>不要假设未写入文档的行为</strong>
+            <p>协议以本文档、仓库中的 Schema 和实际安装包行为为准。依赖未公开的字段、消息类型或文件布局，可能在后续版本失效。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="doc-section" id="resources">
+        <div class="section-eyebrow">参考 / Resources</div>
+        <h2>资源与支持</h2>
+        <p class="lead">从模板开始，遇到问题时先对照 Schema 和验证记录，再提交可复现的信息。</p>
+
+        <div class="card-grid">
+          <a class="card resource-card" href="https://github.com/shuo-huge/gamesupport-javascript-plugin" target="_blank" rel="noreferrer noopener">
+            <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4z"/><path d="m9 9-3 3 3 3M15 9l3 3-3 3"/></svg></span>
+            <h4>JavaScript 模板仓库</h4>
+            <p>完整的 <code>plugin.cjs</code>、<code>launcher.go</code> 和 <code>build.mjs</code>，可直接构建安装。</p>
+          </a>
+          <a class="card resource-card" href="https://github.com/shuo-huge/gamesupport-javascript-plugin" target="_blank" rel="noreferrer noopener">
+            <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h4"/></svg></span>
+            <h4>manifest Schema</h4>
+            <p>所有字段、枚举、正则和长度限制的机器可读定义。</p>
+          </a>
+          <a class="card resource-card" href="https://github.com/shuo-huge/gamesupport-javascript-plugin" target="_blank" rel="noreferrer noopener">
+            <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span>
+            <h4>GameSupport 开发文档</h4>
+            <p>架构、插件 SDK、验证记录和生态模块说明。</p>
+          </a>
+          <a class="card resource-card" href="https://github.com/shuo-huge/gamesupport-javascript-plugin/issues" target="_blank" rel="noreferrer noopener">
+            <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-4-7.5"/><path d="M21 4v5h-5"/></svg></span>
+            <h4>问题反馈</h4>
+            <p>提交时附上 GameSupport 版本、插件 manifest、日志和最小复现步骤。</p>
+          </a>
+        </div>
+
+        <h3>源码仓库中的相关位置</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>路径</th><th>内容</th></tr></thead>
+            <tbody>
+              <tr><td><code>sdk/examples/javascript-event-provider/</code></td><td>JavaScript 最简插件模板。</td></tr>
+              <tr><td><code>sdk/manifest.schema.json</code></td><td>Plugin SDK 1.0 清单 Schema。</td></tr>
+              <tr><td><code>docs/PLUGIN-SDK.md</code></td><td>SDK 1.0 的中文规范说明。</td></tr>
+              <tr><td><code>docs/ARCHITECTURE.md</code></td><td>Host 模块边界、队列和进程模型。</td></tr>
+              <tr><td><code>plugins/screen-kill-detector/</code></td><td>真实的 Go 识别插件，可参考完整协议实现。</td></tr>
+              <tr><td><code>scripts/ipc-debug.ps1</code></td><td>本地协议调试工具，只用于受信任的开发包。</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout">
+          <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></svg></div>
+          <div class="callout-body">
+            <strong>文档版本</strong>
+            <p>本文档适用于 GameSupport 0.4.x 与 Plugin SDK 1.0，最后更新于 2026-11-23。字段约束以仓库中的 <code>manifest.schema.json</code> 和实际安装包行为为准。</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <aside class="toc" aria-label="本页目录">
+    <p class="toc-title">本页</p>
+    <nav id="tocList"></nav>
+  </aside>
+</div>
+
+
+
+<div class="search-modal" id="searchModal" hidden>
+  <div class="search-backdrop" data-close-search></div>
+  <div class="search-panel" role="dialog" aria-modal="true" aria-labelledby="searchTitle">
+    <p class="sr-only" id="searchTitle">搜索文档</p>
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.2 4.2"/></svg>
+      <input id="searchInput" type="search" placeholder="搜索章节、字段或错误信息" autocomplete="off" spellcheck="false" aria-label="搜索文档">
+      <kbd>Esc</kbd>
+    </div>
+    <div class="search-results" id="searchResults"></div>
+    <div class="search-hint">
+      <span><kbd>↑</kbd><kbd>↓</kbd> 选择</span>
+      <span><kbd>Enter</kbd> 跳转</span>
+      <span><kbd>Ctrl K</kbd> 随时打开</span>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div>
+      <strong>GameSupport Plugin SDK 1.0</strong>
+      <p>面向外部开发者的插件开发文档。适用于 GameSupport 0.4.x，最后更新 2026-11-23。</p>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/shuo-huge/gamesupport-javascript-plugin" target="_blank" rel="noreferrer noopener">GitHub</a>
+      <a href="#overview">概览</a>
+      <a href="#protocol">协议</a>
+      <a href="#troubleshooting">故障排查</a>
+      <a href="#top">回到顶部</a>
+    </div>
+  </div>
+</footer>
+
+<script src="./highlight.min.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+
+  /* Theme: system → light → dark → system */
+  const themeToggle = $('#themeToggle');
+  const themeOrder = ['system', 'light', 'dark'];
+  const themeLabels = { system: '跟随系统', light: '浅色', dark: '深色' };
+  const readTheme = () => {
+    try {
+      const saved = localStorage.getItem('gsdocs-theme');
+      return saved === 'light' || saved === 'dark' ? saved : 'system';
+    } catch (error) {
+      return 'system';
+    }
+  };
+  const applyTheme = (mode) => {
+    if (mode === 'system') delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = mode;
+    themeToggle.dataset.mode = mode;
+    themeToggle.setAttribute('aria-label', `切换主题：当前${themeLabels[mode]}`);
+    themeToggle.title = `主题：${themeLabels[mode]}（点击切换）`;
+  };
+  applyTheme(readTheme());
+  themeToggle.addEventListener('click', () => {
+    const current = readTheme();
+    const next = themeOrder[(themeOrder.indexOf(current) + 1) % themeOrder.length];
+    try {
+      localStorage.setItem('gsdocs-theme', next);
+    } catch (error) {}
+    applyTheme(next);
+  });
+
+  /* Mobile navigation */
+  const navToggle = $('#navToggle');
+  const navClose = $('#navClose');
+  const scrim = $('#scrim');
+  const openNav = () => {
+    document.body.classList.add('nav-open');
+    scrim.hidden = false;
+    navToggle.setAttribute('aria-expanded', 'true');
+    navClose.focus();
+  };
+  const closeNav = () => {
+    const wasOpen = document.body.classList.contains('nav-open');
+    document.body.classList.remove('nav-open');
+    scrim.hidden = true;
+    navToggle.setAttribute('aria-expanded', 'false');
+    if (wasOpen && window.innerWidth < 1024) navToggle.focus({ preventScroll: true });
+  };
+  navToggle.addEventListener('click', openNav);
+  navClose.addEventListener('click', closeNav);
+  scrim.addEventListener('click', closeNav);
+  const desktopQuery = window.matchMedia('(min-width: 1024px)');
+  const handleDesktop = (event) => {
+    if (event.matches) closeNav();
+  };
+  if (desktopQuery.addEventListener) desktopQuery.addEventListener('change', handleDesktop);
+  else if (desktopQuery.addListener) desktopQuery.addListener(handleDesktop);
+
+  /* Search index and on-this-page navigation */
+  const sections = $$('.doc-section');
+  const searchIndex = [];
+  sections.forEach((section) => {
+    const heading = section.querySelector('h2');
+    if (!heading || !section.id) return;
+    const eyebrow = section.querySelector('.section-eyebrow');
+    searchIndex.push({
+      id: section.id,
+      title: heading.textContent.trim(),
+      context: eyebrow ? eyebrow.textContent.trim() : '章节',
+      text: section.textContent.replace(/\s+/g, ' ').trim(),
+    });
+  });
+
+  const tocList = $('#tocList');
+  sections.forEach((section) => {
+    const heading = section.querySelector('h2');
+    if (!heading || !section.id) return;
+    const link = document.createElement('a');
+    link.href = `#${section.id}`;
+    link.dataset.target = section.id;
+    link.textContent = heading.textContent.trim();
+    tocList.appendChild(link);
+  });
+
+  sections.forEach((section) => {
+    const heading = section.querySelector('h2');
+    if (!heading || !section.id) return;
+    const anchor = document.createElement('a');
+    anchor.className = 'anchor';
+    anchor.href = `#${section.id}`;
+    anchor.setAttribute('aria-label', '链接到本节');
+    anchor.textContent = '#';
+    heading.appendChild(anchor);
+  });
+
+  /* Search dialog */
+  const searchModal = $('#searchModal');
+  const searchInput = $('#searchInput');
+  const searchResults = $('#searchResults');
+  const searchOpenButton = $('#searchOpen');
+  let selectedIndex = 0;
+  let lastFocus = null;
+
+  const normalize = (value) => value.toLowerCase();
+  const makeSnippet = (text, query) => {
+    const at = normalize(text).indexOf(normalize(query));
+    if (at < 0) return text.slice(0, 110) + (text.length > 110 ? '…' : '');
+    const start = Math.max(0, at - 45);
+    const end = Math.min(text.length, at + query.length + 85);
+    return `${start > 0 ? '…' : ''}${text.slice(start, end)}${end < text.length ? '…' : ''}`;
+  };
+
+  const getResults = (query) => {
+    const needle = query.trim();
+    if (!needle) return searchIndex.slice(0, 6).map((item) => ({ ...item, snippet: '' }));
+    const q = normalize(needle);
+    return searchIndex
+      .map((item) => {
+        const title = normalize(item.title);
+        const body = normalize(item.text);
+        let score = 0;
+        if (title === q) score = 120;
+        else if (title.startsWith(q)) score = 90;
+        else if (title.includes(q)) score = 70;
+        if (body.includes(q)) score += 25;
+        return { item, score };
+      })
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8)
+      .map((entry) => ({ ...entry.item, snippet: makeSnippet(entry.item.text, needle) }));
+  };
+
+  const goTo = (id) => {
+    closeSearch();
+    const target = document.getElementById(id);
+    if (!target) return;
+    if (location.hash === `#${id}`) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    else location.hash = id;
+  };
+
+  function renderResults(query) {
+    const results = getResults(query);
+    selectedIndex = 0;
+    searchResults.replaceChildren();
+    if (!results.length) {
+      const empty = document.createElement('div');
+      empty.className = 'search-empty';
+      empty.textContent = '没有找到匹配章节。试试“manifest”“心跳”或“权限”。';
+      searchResults.appendChild(empty);
+      return;
+    }
+    results.forEach((result, index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `search-result${index === 0 ? ' selected' : ''}`;
+      button.dataset.target = result.id;
+      const title = document.createElement('span');
+      title.className = 'sr-title';
+      title.textContent = result.title;
+      const context = document.createElement('span');
+      context.className = 'sr-context';
+      context.textContent = result.context;
+      button.append(title, context);
+      if (result.snippet) {
+        const snippet = document.createElement('span');
+        snippet.className = 'sr-snippet';
+        snippet.textContent = result.snippet;
+        button.appendChild(snippet);
+      }
+      button.addEventListener('click', () => goTo(result.id));
+      searchResults.appendChild(button);
+    });
+  }
+
+  const openSearch = () => {
+    lastFocus = document.activeElement;
+    searchModal.hidden = false;
+    document.body.classList.add('modal-open');
+    searchInput.value = '';
+    renderResults('');
+    requestAnimationFrame(() => searchInput.focus());
+  };
+  const closeSearch = () => {
+    searchModal.hidden = true;
+    document.body.classList.remove('modal-open');
+    if (lastFocus && typeof lastFocus.focus === 'function') {
+      lastFocus.focus({ preventScroll: true });
+    }
+  };
+
+  const moveSelection = (delta) => {
+    const items = $$('.search-result', searchResults);
+    if (!items.length) return;
+    const current = items[selectedIndex];
+    if (current) current.classList.remove('selected');
+    selectedIndex = (selectedIndex + delta + items.length) % items.length;
+    items[selectedIndex].classList.add('selected');
+    items[selectedIndex].scrollIntoView({ block: 'nearest' });
+  };
+
+  searchOpenButton.addEventListener('click', openSearch);
+  searchModal.addEventListener('click', (event) => {
+    if (event.target.closest('[data-close-search]')) closeSearch();
+  });
+  searchInput.addEventListener('input', () => renderResults(searchInput.value));
+  searchInput.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      moveSelection(1);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      moveSelection(-1);
+    } else if (event.key === 'Enter') {
+      const selected = $('.search-result.selected', searchResults);
+      if (selected) {
+        event.preventDefault();
+        goTo(selected.dataset.target);
+      }
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      if (!searchModal.hidden) closeSearch();
+      else if (document.body.classList.contains('nav-open')) closeNav();
+      return;
+    }
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      if (searchModal.hidden) openSearch();
+      else closeSearch();
+      return;
+    }
+    if (event.key === '/' && searchModal.hidden) {
+      const target = document.activeElement;
+      const tag = target ? target.tagName.toLowerCase() : '';
+      if (!['input', 'textarea', 'select'].includes(tag) && !(target && target.isContentEditable)) {
+        event.preventDefault();
+        openSearch();
+      }
+    }
+  });
+
+  $$('.nav-link, #tocList a').forEach((link) => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth < 1024) closeNav();
+    });
+  });
+
+  /* Scrollspy and reading progress */
+  const navLinks = $$('.nav-link');
+  const tocLinks = $$('#tocList a');
+  const progressBar = $('#progressBar');
+  const setActive = (id) => {
+    navLinks.forEach((link) => {
+      const active = link.getAttribute('href') === `#${id}`;
+      link.classList.toggle('active', active);
+      if (active) link.setAttribute('aria-current', 'location');
+      else link.removeAttribute('aria-current');
+    });
+    tocLinks.forEach((link) => {
+      const active = link.getAttribute('href') === `#${id}`;
+      link.classList.toggle('active', active);
+      if (active) link.setAttribute('aria-current', 'location');
+      else link.removeAttribute('aria-current');
+    });
+  };
+
+  let scrollQueued = false;
+  const updateScrollState = () => {
+    scrollQueued = false;
+    const offset = 96;
+    let current = sections[0];
+    for (const section of sections) {
+      if (section.getBoundingClientRect().top <= offset) current = section;
+      else break;
+    }
+    if (current) setActive(current.id);
+    const doc = document.documentElement;
+    const max = doc.scrollHeight - window.innerHeight;
+    const ratio = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+    progressBar.style.width = `${(ratio * 100).toFixed(2)}%`;
+  };
+  const onScroll = () => {
+    if (scrollQueued) return;
+    scrollQueued = true;
+    requestAnimationFrame(updateScrollState);
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+  updateScrollState();
+
+  /* Syntax highlighting, then code headers and copy buttons */
+  if (window.hljs) {
+    try {
+      window.hljs.highlightAll();
+    } catch (error) {}
+  }
+
+  const copyText = async (text) => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (error) {}
+    try {
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.setAttribute('readonly', '');
+      area.style.position = 'fixed';
+      area.style.top = '-1000px';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
+      const copied = document.execCommand('copy');
+      area.remove();
+      return copied;
+    } catch (error) {
+      return false;
+    }
+  };
+
+  $$('.codeblock').forEach((block) => {
+    const code = block.querySelector('code');
+    if (!code) return;
+    const head = document.createElement('div');
+    head.className = 'codeblock-head';
+    const label = document.createElement('span');
+    label.className = 'codeblock-title';
+    label.textContent = block.dataset.file || block.dataset.lang || 'code';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'copy-btn';
+    button.textContent = '复制';
+    button.setAttribute('aria-label', '复制代码');
+    button.addEventListener('click', async () => {
+      const copied = await copyText(code.textContent || '');
+      button.textContent = copied ? '已复制' : '按 Ctrl+C';
+      button.classList.toggle('done', copied);
+      window.setTimeout(() => {
+        button.textContent = '复制';
+        button.classList.remove('done');
+      }, 1800);
+    });
+    head.append(label, button);
+    block.prepend(head);
+  });
+})();
+</script>
+</body>
+</html>

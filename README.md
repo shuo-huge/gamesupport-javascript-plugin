@@ -2,7 +2,8 @@
 
 本仓库只包含 JavaScript 简易插件及其开发文档。
 
-- [插件开发文档](docs/PLUGIN-SDK.md)
+- [插件开发文档（在线版）](https://shuo-huge.github.io/gamesupport-javascript-plugin/)
+- [插件开发文档（Markdown）](docs/PLUGIN-SDK.md)
 - [模板使用说明](sdk/examples/javascript-event-provider/README.md)
 
 在 Windows x64 开发机安装 Node.js 22+ 和 Go，然后执行：
