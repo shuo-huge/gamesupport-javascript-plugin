@@ -1,0 +1,54 @@
+<main>
+  <header>
+    <div>
+      <small>JAVASCRIPT PLUGIN / 01</small>
+      <h1>让灵感动起来</h1>
+      <p>调整粒子与光环，做一段自己的触发动画。</p>
+    </div>
+    <span class="badge">透明 GIF · 128 × 128</span>
+  </header>
+  <div class="workspace">
+    <section class="stage">
+      <div class="canvas-area">
+        <canvas id="canvas" width="128" height="128" aria-label="动画预览"></canvas>
+      </div>
+      <div class="transport">
+        <button id="play">暂停预览</button
+        ><input id="scrub" type="range" min="0" max="23" value="0" aria-label="动画帧" /><span
+          id="frame"
+          >01 / 24</span
+        >
+      </div>
+      <p>透明区域以棋盘格显示，导出不含背景。</p>
+    </section>
+    <section class="controls">
+      <h2>动画参数</h2>
+      <label>动画名称<input id="name" value="我的能量光环" maxlength="80" /></label
+      ><label
+        >效果<select id="kind">
+          <option value="ring">扩散光环</option>
+          <option value="burst">粒子爆发</option>
+          <option value="orbit">环绕星光</option>
+        </select></label
+      ><label>主题颜色<input id="color" type="color" value="#8b7cff" /></label
+      ><label
+        >粒子数量 <output id="countValue">12</output
+        ><input id="count" type="range" min="4" max="24" value="12" /></label
+      ><label
+        >播放速度<select id="fps">
+          <option value="12">12 帧 / 秒 · 2 秒</option>
+          <option value="24" selected>24 帧 / 秒 · 1 秒</option>
+          <option value="30">30 帧 / 秒 · 0.8 秒</option>
+        </select></label
+      >
+      <div class="actions">
+        <button id="save">保存工程</button><button id="restore">读取工程</button
+        ><button id="export" class="primary">导出到动画库</button>
+      </div>
+      <p id="status" role="status">准备就绪</p>
+      <p class="hint">
+        导出后前往“动画库”查看；要用快捷键或游戏事件播放，请在“触发中心”添加规则并关联该动画。
+      </p>
+    </section>
+  </div>
+</main>

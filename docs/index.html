@@ -888,7 +888,7 @@ body.nav-open .scrim { display: block; }
         <p class="nav-label">入门</p>
         <ul class="nav-list">
           <li><a class="nav-link" href="#overview">概览</a></li>
-          <li><a class="nav-link" href="#quickstart">快速开始</a></li>
+          <li><a class="nav-link" href="#ui-quickstart">界面插件：动画编辑器</a></li><li><a class="nav-link" href="#ui-manifest">菜单与页面清单</a></li><li><a class="nav-link" href="#ui-api">工程与 GIF 导出接口</a></li><li><a class="nav-link" href="#ui-security">页面边界与更新</a></li><li><a class="nav-link" href="#quickstart">事件插件：快速开始</a></li>
           <li><a class="nav-link" href="#concepts">核心概念</a></li>
         </ul>
       </div>
@@ -922,8 +922,8 @@ body.nav-open .scrim { display: block; }
       </div>
     </nav>
     <div class="sidebar-foot">
-      <span class="badge">SDK 1.0</span>
-      <span>GameSupport 0.4.x</span>
+      <span class="badge">SDK 1.1</span>
+      <span>GameSupport 0.11.0+</span>
     </div>
   </aside>
 
@@ -933,17 +933,17 @@ body.nav-open .scrim { display: block; }
     <div class="content">
       <div class="hero">
         <div class="hero-copy">
-          <div class="eyebrow"><span class="dot" aria-hidden="true"></span>Plugin SDK 1.0 · 外部开发者文档</div>
+          <div class="eyebrow"><span class="dot" aria-hidden="true"></span>Plugin SDK 1.1 · 外部开发者文档</div>
           <h1>编写 GameSupport 插件</h1>
-          <p class="hero-lead">把你的检测逻辑接到 GameSupport 的事件引擎。插件只负责发现事件，音效、动画和触发规则由主程序统一执行。</p>
+          <p class="hero-lead">用 JavaScript 扩展菜单和工具页面，也可以接入事件源。界面插件无需独立进程；事件播放仍由触发中心规则统一执行。</p>
           <div class="hero-actions">
-            <a class="btn btn-primary" href="#quickstart">10 分钟快速开始
+            <a class="btn btn-primary" href="#ui-quickstart">10 分钟快速开始
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
             <a class="btn" href="#protocol">查看协议</a>
           </div>
           <div class="hero-meta" aria-label="适用环境">
-            <span>Windows x64</span><span>Node.js 22+</span><span>GS-IPC / 1.0</span><span>GameSupport 0.4.x</span>
+            <span>Windows x64</span><span>Node.js 22+</span><span>GS-IPC / 1.0</span><span>GameSupport 0.11.0+</span>
           </div>
         </div>
         <div class="console" aria-label="GS-IPC 握手与事件示例">
@@ -977,7 +977,7 @@ body.nav-open .scrim { display: block; }
         <div class="section-eyebrow">入门 / Overview</div>
         <h2>插件在 GameSupport 中扮演什么角色</h2>
         <p class="lead">GameSupport 是 Windows 上的游戏桌面增强工具。全局快捷键、插件和本地 HTTP API 都汇入同一个 Event Bus；触发规则决定某个事件发生时播放什么音效或动画。</p>
-        <p>插件是<strong>事件源</strong>。它不直接操作播放器，也不需要知道用户配置了哪些音效。你只需要在检测到事情发生时，发送一条格式正确的 JSON 事件。</p>
+        <p>插件可以提供<strong>菜单和工具页面</strong>，也可以作为<strong>事件源</strong>。下图说明事件插件的工作方式。它不直接操作播放器，也不需要知道用户配置了哪些音效。你只需要在检测到事情发生时，发送一条格式正确的 JSON 事件。</p>
 
         <div class="flow" role="img" aria-label="插件通过 GS-IPC 将事件发送到 GameSupport 的 Event Bus，再由触发规则播放音效或动画">
           <div class="flow-node you">
@@ -1035,7 +1035,38 @@ body.nav-open .scrim { display: block; }
         </div>
       </section>
 
-      <section class="doc-section" id="quickstart">
+      <section class="doc-section" id="ui-quickstart"><div class="section-eyebrow">JavaScript UI / SDK 1.1</div><h2>运行动画编辑器示例</h2><div class="codeblock" data-lang="powershell"><pre><code>node sdk/examples/animation-editor/build.mjs</code></pre></div><p>在插件中心安装 <code>build/animation-editor-plugin</code>，点击“打开工具”或侧栏“动画编辑器”。调整光环、粒子、颜色和速度，预览/拖动帧，保存工程；导出后前往动画库，在触发中心添加规则关联导出的动画。模板是简单效果编辑器，不包含视频剪辑或完整关键帧系统。</p></section>
+<section class="doc-section" id="ui-manifest"><div class="section-eyebrow">JavaScript UI / SDK 1.1</div><h2>清单</h2><div class="codeblock" data-lang="json"><pre><code>{
+  "manifest_version": 1,
+  "id": "com.example.animation-editor",
+  "name": "我的动画编辑器",
+  "version": "1.0.0",
+  "author": "Your name",
+  "description": "编辑并导出动画",
+  "type": "ui",
+  "runtime": { "type": "web" },
+  "permissions": [],
+  "events": [],
+  "ui": {
+    "pages": [
+      { "id": "editor", "title": "动画编辑器", "html": "page.html", "script": "page.js", "style": "page.css" }
+    ]
+  },
+  "files": { "page.html": "填写实际 SHA-256", "page.js": "填写实际 SHA-256", "page.css": "填写实际 SHA-256" }
+}</code></pre></div><p>示例 build.mjs 自动生成真实哈希。一个插件支持 1–8 页，页面 ID 唯一，格式为小写字母开头、字母/数字/下划线/短横线，最长 40 字符；标题最长 40 字符。html、script 必需，style 可选，各文件上限 512 KiB，均须在完整性清单中。HTML 写 body 内的内容，JavaScript 写独立 script 文件，事件用 addEventListener 或元素属性绑定；不要在 HTML 写 script 或 onclick。CSS 写独立 style 文件，可用 Canvas、内嵌 data 图片和浏览器 File API。</p><p>事件插件保持 <code>type: event_provider</code> 与现有 native runtime，仅新增 ui 字段即可。现有插件包不需要修改。纯界面插件 events 为空，不发送 GS-IPC 事件，也不运行进程；自动启动设置忽略。</p></section>
+<section class="doc-section" id="ui-api"><div class="section-eyebrow">JavaScript UI / SDK 1.1</div><h2>页面 API 1.0</h2><p>主程序提供 <code>window.GameSupport</code>，<code>GameSupport.apiVersion</code> 为 <code>1.0</code>。脚本运行时即可调用，返回 Promise；失败 reject Error，页面应显示可读错误。</p><div class="codeblock" data-lang="javascript"><pre><code>const info = await GameSupport.call('plugin.info');
+const project = await GameSupport.call('storage.get');
+await GameSupport.call('storage.set', { value: { title: '我的工程', layers: [] } });
+const assets = await GameSupport.call('assets.list');</code></pre></div><div class="table-wrap"><table><thead><tr><th>方法</th><th>参数</th><th>结果</th></tr></thead><tbody><tr><td>plugin.info</td><td>无</td><td>本插件 id、name、version、api_version</td></tr><tr><td>storage.get</td><td>无</td><td>本插件保存的 JSON，没有工程时为 null</td></tr><tr><td>storage.set</td><td>{value: JSON}</td><td>{saved: true}，整体覆盖本插件工程</td></tr><tr><td>assets.list</td><td>无</td><td>素材 id、name、asset_type、width、height、duration，不含磁盘路径</td></tr><tr><td>effects.save</td><td>下述动画参数</td><td>导入动画的公开素材信息</td></tr></tbody></table></div><p>工程总计最多 1 MiB，保存到本插件独立 SQLite 记录，同一插件的多个页面共享；与运行配置分开，升级保留。卸载暂时保留工程，同 ID 重装可以读取。页面切换会销毁页面，未保存的内存编辑不会自动保留。不要依赖 localStorage（页面为独立不透明来源）。</p><h3>导出 GIF</h3><div class="codeblock" data-lang="javascript"><pre><code>const bytes = canvas.getContext('2d').getImageData(0, 0, width, height).data;
+let raw = '';
+for (let i = 0; i &lt; bytes.length; i += 8192)
+  raw += String.fromCharCode(...bytes.subarray(i, i + 8192));
+const asset = await GameSupport.call('effects.save', {
+  name: '我的动画', width, height, fps: 24,
+  frames: [btoa(raw)] // 每帧为按行排列的 RGBA8 原始数据的 base64
+});</code></pre></div><p>名称 1–80 字；尺寸每边 1–256；FPS 1–60；帧数 1–60；所有 base64 帧字符串合计最多 8 MiB，每帧解码长度严格为 width × height × 4。Host 编码循环 GIF，使用普通素材导入校验，返回素材 ID。GIF 使用有限调色板与二值透明度，不能完整保留 RGBA 的半透明渐变；与库内已有文件哈希相同会提示已经导入。插件不能指定输出磁盘路径。导出不会自动创建/触发规则或覆盖已有素材。</p></section>
+<section class="doc-section" id="ui-security"><div class="section-eyebrow">JavaScript UI / SDK 1.1</div><h2>页面边界与更新</h2><p>页面放在独立 sandbox iframe，只允许脚本，不允许同源访问、弹窗、下载或顶层导航；通过每次打开生成的通道标识与父窗口通信。Host 检查消息来源和固定接口白名单，插件 ID/页面 ID/版本由 Host 绑定，不能通过参数切换到其他插件。页面禁止外网连接、CDN、任意本地文件读取、任意主程序命令和原生进程启动。不支持在此接口里调用 Native 插件自定义命令。</p><p>页面代码通过本地 data 文档加载，配有独立 CSP；主窗口不执行插件 HTML/JavaScript。加载前重新检查包与哈希；版本变化/卸载后旧页面请求被拒绝。最多 4 个同时在途请求，请求超时 60 秒；请避免高频轮询和无限循环。浏览器隔离不代表 CPU/内存配额；不要安装不受信任插件。Native 插件仍使用操作系统进程权限，不受 iframe 限制。</p><p>更新时提高版本、重新构建哈希并在插件中心更新；重新打开页面加载新代码。将来扩展 API 应保持旧接口兼容，不要直接调用 Tauri 内部接口。</p></section>
+<section class="doc-section" id="quickstart">
         <div class="section-eyebrow">入门 / Quick start</div>
         <h2>10 分钟跑通模板</h2>
         <p class="lead">先用官方模板确认安装、授权、事件和触发规则整条链路。跑通之后，再把模板里的示例逻辑换成你自己的检测代码。</p>
@@ -1066,8 +1097,8 @@ cd gamesupport-javascript-plugin</code></pre></div>
             <p>打开 GameSupport，进入<strong>插件中心</strong>，点击<strong>安装本地插件</strong>，选择包含 <code>manifest.json</code> 的构建目录。不要选择它的上级目录。</p>
           </li>
           <li>
-            <h3>授权并启动</h3>
-            <p>在插件卡片上打开<strong>配置与权限</strong>，勾选 <code>events.emit</code>，点击<strong>保存授权与配置</strong>。保存后回到卡片点击<strong>启动</strong>，等待状态变成<strong>运行中</strong>。</p>
+            <h3>直接启动事件插件</h3>
+            <p>声明能力在安装时自动启用，无需勾选权限。点击<strong>启动</strong>，等待状态变成<strong>运行中</strong>。</p>
           </li>
           <li>
             <h3>创建一条触发规则</h3>
@@ -1087,13 +1118,13 @@ cd gamesupport-javascript-plugin</code></pre></div>
           </div>
         </div>
 
-        <p>如果链路中断，先看<a href="#troubleshooting">故障排查</a>。最常见的原因是构建目录选错、没有授权 <code>events.emit</code>、规则中的事件 ID 拼写不一致，或修改源码后没有重新构建。</p>
+        <p>如果链路中断，先看<a href="#troubleshooting">故障排查</a>。最常见的原因是构建目录选错、manifest 没有声明 <code>events.emit</code>、规则中的事件 ID 拼写不一致，或修改源码后没有重新构建。</p>
       </section>
 
       <section class="doc-section" id="concepts">
         <div class="section-eyebrow">入门 / Concepts</div>
         <h2>先记住这六件事</h2>
-        <p class="lead">插件系统的规则不多，但每一条都直接影响插件能否启动、能否收到事件，以及更新后用户是否还需要重新授权。</p>
+        <p class="lead">插件系统的规则不多，但每一条都直接影响插件能否启动、能否收到事件，以及更新后如何保留配置和工程。</p>
 
         <div class="card-grid">
           <div class="card">
@@ -1118,13 +1149,13 @@ cd gamesupport-javascript-plugin</code></pre></div>
           </div>
           <div class="card">
             <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.4 3 8.2 7 9.5 4-1.3 7-5.1 7-9.5V6Z"/><path d="m9 12 2 2 4-4"/></svg></span>
-            <h4>权限由用户授予</h4>
-            <p>首次安装不授予任何权限。用户逐项勾选后，插件才能获得对应的能力声明。</p>
+            <h4>声明能力自动启用</h4>
+            <p>安装、更新与启动时自动启用 manifest 声明的能力，不显示权限勾选；未声明事件仍会被拒绝。</p>
           </div>
           <div class="card">
             <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7.5 12 3l7 4.5v9L12 21l-7-4.5Z"/><path d="M12 12v9M5 7.5l7 4.5 7-4.5"/></svg></span>
             <h4>JavaScript 不是沙箱</h4>
-            <p>模板用 EXE 启动 Node。勾选权限不会限制 Node 的 Windows 文件、网络或进程能力。</p>
+            <p>模板用 EXE 启动 Node。权限声明不会限制 Node 的 Windows 文件、网络或进程能力。</p>
           </div>
         </div>
 
@@ -1171,7 +1202,7 @@ cd gamesupport-javascript-plugin</code></pre></div>
             <thead><tr><th>文件</th><th>作用</th><th>注意</th></tr></thead>
             <tbody>
               <tr><td><code>plugin.cjs</code></td><td>插件的全部运行逻辑，由 Node 执行。</td><td>stdout 只写 GS-IPC JSON；日志用 <code>console.error</code>。</td></tr>
-              <tr><td><code>launcher.exe</code></td><td>Host 实际启动的入口，把 stdin/stdout/stderr 原样转给 <code>node.exe</code>。</td><td>由 <code>launcher.go</code> 编译，当前 Host 只接受 EXE 入口，且不传命令行参数。</td></tr>
+              <tr><td><code>launcher.exe</code></td><td>Host 实际启动的入口，把 stdin/stdout/stderr 原样转给 <code>node.exe</code>。</td><td>由 <code>launcher.go</code> 编译，Native 事件运行时只接受 EXE 入口，且不传命令行参数。</td></tr>
               <tr><td><code>node.exe</code></td><td>随包分发的 Node 运行时。</td><td>体积较大；必须保留版权与第三方声明。</td></tr>
               <tr><td><code>manifest.json</code></td><td>插件身份、事件、权限与完整性清单。</td><td>不要手改安装目录中的副本；重新构建再更新。</td></tr>
               <tr><td><code>NODE-LICENSE.txt</code></td><td>Node 运行时的许可文本。</td><td>分发运行时必须附带。</td></tr>
@@ -1183,7 +1214,7 @@ cd gamesupport-javascript-plugin</code></pre></div>
           <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 21 20H3Z"/><path d="M12 9v5M12 17h.01"/></svg></div>
           <div class="callout-body">
             <strong>不能只安装一个 .js 文件</strong>
-            <p>当前 Host 的入口必须是包内的 <code>.exe</code>。模板用一个小型启动器承载 Node，这是为了适配现有 Native 插件进程模型，不代表 JavaScript 运行在沙箱里。</p>
+            <p>Native 事件运行时的入口必须是包内的 <code>.exe</code>。模板用一个小型启动器承载 Node，这是为了适配现有 Native 插件进程模型，不代表 JavaScript 运行在沙箱里。</p>
           </div>
         </div>
 
@@ -1241,11 +1272,11 @@ cd gamesupport-javascript-plugin</code></pre></div>
               <tr><td><code>version</code></td><td>SemVer</td><td><code>1.0.0</code> 或 <code>1.1.0-beta.1</code>。更新必须严格高于已安装版本。</td></tr>
               <tr><td><code>author</code></td><td>非空字符串</td><td>个人或团队名称。</td></tr>
               <tr><td><code>description</code></td><td>≤2000 字符</td><td>说明插件做什么、读取什么、发送哪些事件。</td></tr>
-              <tr><td><code>type</code></td><td>固定 <code>event_provider</code></td><td>当前唯一的插件类型：事件提供者。</td></tr>
-              <tr><td><code>runtime</code></td><td>对象</td><td><code>type: native</code>、<code>os: ["windows"]</code>、<code>arch: ["x86_64"]</code>，入口是包内相对路径的 <code>.exe</code>，协议固定。</td></tr>
+              <tr><td><code>type</code></td><td><code>event_provider</code> 或 <code>ui</code></td><td>事件提供者或纯界面插件；均可声明 ui.pages。</td></tr>
+              <tr><td><code>runtime</code></td><td>对象</td><td>事件插件使用 native/os/arch/executable/protocol；纯界面插件使用 <code>{"type":"web"}</code>，并声明 ui.pages。</td></tr>
               <tr><td><code>permissions</code></td><td>枚举数组</td><td>只能声明 Host 支持的六种权限，详见<a href="#permissions">权限模型</a>。</td></tr>
               <tr><td><code>events</code></td><td>最多 128 项</td><td>每项包含 <code>id</code> 与 <code>name</code>。未声明的事件发送会被拒绝。</td></tr>
-              <tr><td><code>files</code></td><td>1–256 项</td><td>包内除 manifest 外每个文件到小写 SHA-256 的映射。安装和启动前都会校验。</td></tr>
+              <tr><td><code>ui.pages</code></td><td>1–8 个页面</td><td>id、title、html、script 必填，style 可选；文件须在哈希清单中。详见<a href="#ui-manifest">页面清单</a>。</td></tr><tr><td><code>files</code></td><td>1–256 项</td><td>包内除 manifest 外每个文件到小写 SHA-256 的映射。安装和启动前都会校验。</td></tr>
             </tbody>
           </table>
         </div>
@@ -1467,103 +1498,9 @@ cd gamesupport-javascript-plugin</code></pre></div>
         <p>进程意外退出、协议错误和 JSON 解析错误都只影响当前插件。Host 不信任插件提供的错误码，也不会把错误码当作命令执行。</p>
       </section>
 
-      <section class="doc-section" id="permissions">
-        <div class="section-eyebrow">规范 / Permissions</div>
-        <h2>权限模型</h2>
-        <p class="lead">权限是用户审核插件的依据，也是插件向用户说明数据访问范围的方式。它不是 Windows 安全边界。</p>
+      <section class="doc-section" id="permissions"><h2>声明能力与页面接口</h2><p>安装、更新、启动 Native 插件时自动启用清单声明能力，不再提供权限勾选。事件必须在 events 中声明，并声明 events.emit。能力记录不是 Windows 权限沙箱。</p><p>六种 Native 声明能力为 screen.capture、events.emit、filesystem.read、filesystem.write、network.client、process.launch。界面插件使用固定 GameSupport.call 接口，不能通过权限声明解锁任意文件、网络或系统命令。</p><p>纯界面插件使用 permissions: []、events: []。具体边界见<a href="#ui-security">页面边界</a>。</p></section>
 
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>权限</th><th>什么时候需要</th><th>建议</th></tr></thead>
-            <tbody>
-              <tr><td><code>events.emit</code></td><td>发送任何事件。</td><td>事件插件几乎都需要。没有它，所有 <code>event</code> 消息都会被拒绝。</td></tr>
-              <tr><td><code>screen.capture</code></td><td>读取屏幕、窗口或游戏画面像素。</td><td>明确说明捕获范围与频率。独占全屏可能无法捕获，无边框窗口更可靠。</td></tr>
-              <tr><td><code>filesystem.read</code></td><td>读取游戏日志、配置文件或本地状态。</td><td>只声明实际需要的目录。不要扫描与功能无关的用户文件。</td></tr>
-              <tr><td><code>filesystem.write</code></td><td>写缓存、日志或导出文件。</td><td>说明写入位置和用途，避免覆盖用户文件。</td></tr>
-              <tr><td><code>network.client</code></td><td>连接外部服务或本地网络接口。</td><td>披露目标地址、发送的数据和失败时的行为。</td></tr>
-              <tr><td><code>process.launch</code></td><td>启动辅助程序或子进程。</td><td>尽量合并到一个 EXE。退出时由 Job Object 回收进程树，不要启动脱离管理的长期进程。</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <h3>授权生命周期</h3>
-        <ol class="prose">
-          <li>首次安装不授予任何权限，也不会自动启动。</li>
-          <li>用户在<strong>配置与权限</strong>中逐项勾选，然后点击<strong>保存授权与配置</strong>。</li>
-          <li>保存会停止正在运行的插件；重新启动后，新的授权和配置才生效。</li>
-          <li>更新插件会保留用户配置，但清除旧授权并关闭自动启动。用户需要重新审核权限。</li>
-          <li>卸载会备份配置，不删除用户素材或触发规则。以同 ID 重装会恢复配置，但授权仍会被清除。</li>
-        </ol>
-
-        <div class="callout danger">
-          <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.4 3 8.2 7 9.5 4-1.3 7-5.1 7-9.5V6Z"/><path d="M12 8v4.5M12 16h.01"/></svg></div>
-          <div class="callout-body">
-            <strong>Native EXE 以当前用户身份运行</strong>
-            <p>勾选权限不会限制 Node 或你的 EXE 调用 Windows API。Job Object 用于退出时清理进程树，不是沙箱。只安装你信任的插件，也只分发你愿意让用户审核的代码。</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="doc-section" id="lifecycle">
-        <div class="section-eyebrow">规范 / Lifecycle</div>
-        <h2>生命周期、更新与数据</h2>
-        <p class="lead">Host 维护插件进程的状态机。插件发送的 <code>status</code> 只用于日志，真正的启动、停止和错误状态由主程序决定。</p>
-
-        <div class="lifecycle" aria-label="插件状态流转">
-          <span class="pill">已安装</span><span class="pill-arrow">→</span>
-          <span class="pill accent">starting</span><span class="pill-arrow">→</span>
-          <span class="pill accent">running</span><span class="pill-arrow">→</span>
-          <span class="pill">stopping</span><span class="pill-arrow">→</span>
-          <span class="pill">stopped</span>
-          <span class="pill-arrow">·</span>
-          <span class="pill bad">error</span>
-        </div>
-        <p class="small muted">发生崩溃、协议错误、心跳超时或非法消息时进入 <code>error</code>。可以从 <code>stopped</code> 或 <code>error</code> 再次启动，但不能重复启动正在运行的插件。</p>
-
-        <h3>运行规则</h3>
-        <ul class="prose">
-          <li>每个插件独立进程，独立 stdin/stdout，独立队列和日志。</li>
-          <li>插件崩溃不会拖垮主程序或其他插件。</li>
-          <li>保存配置或权限会停止运行中的进程，重启后生效。</li>
-          <li>自动启动默认关闭。用户可以在配置页勾选<strong>随 GameSupport 启动</strong>。</li>
-          <li>主程序退出时会停止接收工作、清理快捷键、取消动画、停止音频，并等待插件结束。</li>
-        </ul>
-
-        <h3>更新流程</h3>
-        <ol class="steps" style="gap:1.15rem">
-          <li>
-            <h3>停止旧版本</h3>
-            <p>更新前必须先停止插件。运行中不能替换包目录。</p>
-          </li>
-          <li>
-            <h3>提升版本并重新构建</h3>
-            <p>同时修改 <code>build.mjs</code> 的 manifest 版本和 <code>plugin.cjs</code> 的 hello 版本，然后重新构建，生成新的哈希。</p>
-          </li>
-          <li>
-            <h3>通过“更新包”选择新目录</h3>
-            <p>在配置页点击<strong>更新包</strong>，选择包含新 <code>manifest.json</code> 的构建目录。</p>
-          </li>
-          <li>
-            <h3>Host 校验并替换</h3>
-            <p>要求同 ID、版本更高、全部文件哈希正确。校验和暂存完成后替换目录；常规失败会回滚旧包。</p>
-          </li>
-          <li>
-            <h3>用户重新授权</h3>
-            <p>更新保留配置，但清除授权并关闭自动启动。用户需要重新审核权限，再启动插件。</p>
-          </li>
-        </ol>
-
-        <div class="callout warning">
-          <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 21 20H3Z"/><path d="M12 9v5M12 17h.01"/></svg></div>
-          <div class="callout-body">
-            <strong>当前没有断电级事务恢复日志</strong>
-            <p>常规校验失败和目录替换失败会回滚。但如果在更新过程中断电或文件系统损坏，不能保证自动恢复。分发时提醒用户避免在更新期间强制关机。</p>
-          </div>
-        </div>
-
-        <h3>卸载与重装</h3>
-        <p>卸载前必须先停止插件。卸载会把配置备份到配置档，不删除用户导入的素材和触发规则。以相同 ID 重新安装会恢复配置，但权限仍需重新授予。</p>
-      </section>
+      <section class="doc-section" id="lifecycle"><h2>生命周期与更新</h2><p>事件插件：已安装 → starting → running → stopping → stopped；异常进入 error。插件配置与可选自动启动保存在 SQLite。更新必须同 ID、更高版本，先停止旧进程；暂存校验后替换目录，常规失败回滚，保留配置和自动启动选择，并自动启用新清单声明能力。尚无断电级事务恢复日志。</p><p>界面插件无需启动，安装后显示侧栏菜单。切换页面销毁当前 iframe，未保存编辑会丢失；storage.set 保存的工程独立持久化，更新保留。更新后重新打开页面。卸载移除菜单和页面；工程暂时保留，同 ID 重装可读取。</p><p>卸载不删除已导入的音效、动画与触发规则。配置会备份到 profiles；重装恢复配置并自动启用声明能力。</p></section>
 
       <section class="doc-section" id="tutorial">
         <div class="section-eyebrow">实践 / Tutorial</div>
@@ -1760,10 +1697,10 @@ const manifest = {
           </li>
 
           <li>
-            <h3>安装、授权并填写配置</h3>
-            <p>在插件中心安装构建目录，打开<strong>配置与权限</strong>，勾选 <code>events.emit</code>。在配置文本框中写入：</p>
+            <h3>安装、启动并填写配置</h3>
+            <p>在插件中心安装构建目录并启动，声明能力自动启用。打开<strong>插件配置</strong>。在配置文本框中写入：</p>
             <div class="codeblock" data-file="插件配置" data-lang="json"><pre><code class="language-json">{ "interval_ms": 5000 }</code></pre></div>
-            <p>点击<strong>保存授权与配置</strong>，然后点击<strong>启动</strong>。配置会通过 initialize 的 <code>config</code> 字段传入插件；保存操作会停止进程，所以必须重新启动才能生效。</p>
+            <p>点击<strong>保存配置</strong>，然后点击<strong>启动</strong>。配置会通过 initialize 的 <code>config</code> 字段传入插件；保存操作会停止进程，所以必须重新启动才能生效。</p>
           </li>
 
           <li>
@@ -1782,7 +1719,7 @@ const manifest = {
 
           <li>
             <h3>修改并发布新版本</h3>
-            <p>把 <code>build.mjs</code> 和 <code>plugin.cjs</code> 中的版本同时改成 <code>1.1.0</code>，重新构建，然后在已安装插件上停止旧版本，点击<strong>更新包</strong>选择新目录。更新后会清除授权，需要重新勾选 <code>events.emit</code> 再启动。</p>
+            <p>把 <code>build.mjs</code> 和 <code>plugin.cjs</code> 中的版本同时改成 <code>1.1.0</code>，重新构建，然后在已安装插件上停止旧版本，点击<strong>更新包</strong>选择新目录。更新保留配置和自动启动选项，自动启用新清单声明能力；可重新启动测试。</p>
           </li>
         </ol>
 
@@ -1790,7 +1727,7 @@ const manifest = {
           <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m4 12.5 5 5L20 6.5"/></svg></div>
           <div class="callout-body">
             <strong>把手工步骤变成清单</strong>
-            <p>每次发布前检查：ID 未变、版本已提升、hello 与 manifest 一致、事件已声明、权限最小、重新构建过、更新后重新授权。把这六项写进 README，能避免大多数“更新后不工作”的问题。</p>
+            <p>每次发布前检查：ID 未变、版本已提升、hello 与 manifest 一致、事件已声明、权限最小、重新构建过、更新后验证配置与能力声明。把这六项写进 README，能避免大多数“更新后不工作”的问题。</p>
           </div>
         </div>
       </section>
@@ -1882,7 +1819,7 @@ fs.writeFileSync(
 console.log(`Install this folder in GameSupport: ${output}`);</code></pre></div>
 
         <h3>启动器</h3>
-        <p>Host 只接受 EXE 入口，并且不传命令行参数。启动器的工作是把标准输入输出原样转发给随包的 Node。它不解析协议，也不做业务逻辑。</p>
+        <p>Native 事件运行时只接受 EXE 入口，并且不传命令行参数。启动器的工作是把标准输入输出原样转发给随包的 Node。它不解析协议，也不做业务逻辑。</p>
         <div class="codeblock" data-file="launcher.go" data-lang="go"><pre><code class="language-go">package main
 
 import (
@@ -1931,7 +1868,7 @@ func main() {
               <tr><td>完整性</td><td>构建后在安装目录运行，没有手动改文件；<code>files</code> 覆盖全部包内文件。</td></tr>
               <tr><td>运行时</td><td>Windows x64；Node 版本与目标环境一致；许可文本已附带。</td></tr>
               <tr><td>稳定性</td><td>连续运行 30 秒以上不掉线；停止后 2 秒内退出。</td></tr>
-              <tr><td>更新</td><td>旧版停止后能更新到新版；配置保留；授权按预期清除。</td></tr>
+              <tr><td>更新</td><td>旧版停止后能更新到新版；配置保留；声明能力自动启用。</td></tr>
             </tbody>
           </table>
         </div>
@@ -1982,13 +1919,13 @@ func main() {
             <thead><tr><th>场景</th><th>预期结果</th></tr></thead>
             <tbody>
               <tr><td>安装</td><td>插件出现在插件中心，显示正确的名称、版本和事件。</td></tr>
-              <tr><td>首次启动</td><td>未授权时拒绝启动；授权后进入 running。</td></tr>
+              <tr><td>首次启动</td><td>声明能力自动启用，启动后进入 running。</td></tr>
               <tr><td>心跳</td><td>连续运行 30 秒以上不被终止。</td></tr>
               <tr><td>测试事件</td><td>点击按钮后事件记录出现，绑定的音效或动画执行。</td></tr>
               <tr><td>业务事件</td><td>真实检测条件满足时发送事件，频率符合预期。</td></tr>
               <tr><td>停止</td><td>点击停止后 2 秒内退出，没有残留子进程。</td></tr>
               <tr><td>配置</td><td>保存配置会停止进程；重新启动后使用新配置。</td></tr>
-              <tr><td>更新</td><td>同 ID、更高版本可更新；配置保留；授权清除。</td></tr>
+              <tr><td>更新</td><td>同 ID、更高版本可更新；配置保留；声明能力自动启用。</td></tr>
               <tr><td>完整性</td><td>修改包内文件后，安装或启动被拒绝。</td></tr>
               <tr><td>隔离</td><td>插件崩溃、发送非法 JSON 或超过速率限制时，主程序继续运行。</td></tr>
             </tbody>
@@ -2031,7 +1968,7 @@ func main() {
               <tr><td><code>bin/node.exe</code></td><td>随包 Node 运行时。</td></tr>
               <tr><td><code>NODE-LICENSE.txt</code></td><td>运行时许可文本。</td></tr>
               <tr><td><code>README.md</code></td><td>功能、权限用途、数据访问、配置示例和卸载说明。</td></tr>
-              <tr><td>版本说明</td><td>新增事件、修复内容、破坏性变化和重新授权提示。</td></tr>
+              <tr><td>版本说明</td><td>新增事件、修复内容、破坏性变化和新声明能力与配置兼容说明。</td></tr>
             </tbody>
           </table>
         </div>
@@ -2042,7 +1979,7 @@ func main() {
           <li>每个权限为什么需要，尤其是 <code>screen.capture</code> 和 <code>filesystem.read</code>。</li>
           <li>发送哪些事件，事件 ID 和含义。</li>
           <li>配置字段、取值范围和默认值。</li>
-          <li>如何停止、卸载，以及更新后会清除授权。</li>
+          <li>如何停止、卸载，以及更新后自动启用声明能力。</li>
           <li>已知限制，例如独占全屏无法截图、只支持特定游戏版本。</li>
         </ul>
 
@@ -2061,7 +1998,7 @@ func main() {
       <section class="doc-section" id="security">
         <div class="section-eyebrow">实践 / Security</div>
         <h2>安全须知</h2>
-        <p class="lead">插件以当前 Windows 用户身份运行。权限勾选表达的是用户信任，不是操作系统层面的隔离。写插件时要把这一点当作前提。</p>
+        <p class="lead">插件以当前 Windows 用户身份运行。能力声明不是安全隔离，安装即启用声明能力，不是操作系统层面的隔离。写插件时要把这一点当作前提。</p>
 
         <div class="card-grid">
           <div class="card">
@@ -2121,7 +2058,7 @@ func main() {
         <div class="faq">
           <div class="faq-item">
             <h3>安装时提示清单无效或 Schema 校验失败</h3>
-            <p>清单不允许未定义字段。逐项检查：<code>manifest_version</code> 是否为 1，ID 是否为至少三段的小写反向域名，版本是否符合 SemVer，<code>runtime</code> 是否包含全部五个字段，权限是否在六种枚举内，事件 ID 是否只含小写字母、数字、下划线和点。</p>
+            <p>清单不允许未定义字段。逐项检查：<code>manifest_version</code> 是否为 1，ID 是否为至少三段的小写反向域名，版本是否符合 SemVer，<code>runtime</code> 是否符合 native 或 web 对应字段，权限是否在六种枚举内，事件 ID 是否只含小写字母、数字、下划线和点。</p>
             <p>先用 <a href="#resources">manifest.schema.json</a> 校验，再重新构建。不要手工修补安装目录里的清单，哈希会立即失效。</p>
           </div>
 
@@ -2171,7 +2108,7 @@ func main() {
 
           <div class="faq-item">
             <h3>修改代码后行为没有变化</h3>
-            <p>Host 运行的是已安装目录中的副本，不是你源码目录里的文件。修改后必须重新构建、提升版本、停止旧插件、通过“更新包”安装新包，然后重新授权并启动。</p>
+            <p>Host 运行的是已安装目录中的副本，不是你源码目录里的文件。修改后必须重新构建、提升版本、停止旧插件、通过“更新包”安装新包，然后重新启动。</p>
             <p>直接编辑用户插件目录会破坏完整性校验，不是支持的工作流。</p>
           </div>
 
@@ -2187,9 +2124,9 @@ func main() {
           </div>
 
           <div class="faq-item">
-            <h3>勾选了权限，插件仍然说没有授权</h3>
-            <p>Host 同时检查两件事：manifest 是否声明了该权限，以及用户是否授予了该权限。只在配置页勾选但 manifest 没声明，保存会被拒绝或不会生效。</p>
-            <p>确认点击的是<strong>保存授权与配置</strong>，并且进程已经重启。更新插件后旧授权会被清除，需要重新勾选。</p>
+            <h3>事件因能力声明被拒绝</h3>
+            <p>Host 自动启用 manifest 声明的能力，并检查事件是否在清单内；请确认 events.emit 和事件 ID 均已声明。</p>
+            <p>重新构建完整性清单后更新插件，再重启事件进程。配置页不再显示权限选项。</p>
           </div>
 
           <div class="faq-item">
@@ -2200,12 +2137,12 @@ func main() {
 
           <div class="faq-item">
             <h3>能不能直接安装一个 .js 文件</h3>
-            <p>不能。当前 Host 的入口必须是包内的 <code>.exe</code>，且启动时不传参数。模板的 <code>launcher.exe</code> 就是为了把 Node 包进 Native 插件模型。</p>
+            <p>不能。Native 事件运行时的入口必须是包内的 <code>.exe</code>，且启动时不传参数。模板的 <code>launcher.exe</code> 就是为了把 Node 包进 Native 插件模型。</p>
           </div>
 
           <div class="faq-item">
             <h3>插件能不能自己播放音效或显示动画</h3>
-            <p>不建议，也不是这套模型的设计。插件只发送事件；用户通过触发规则选择音效和动画。这样用户拥有最终控制权，插件也不需要接触播放器和素材目录。</p>
+            <p>工具页面可在自己的 Canvas 中预览动画，并通过 effects.save 导出到动画库。正式桌面播放由用户在触发中心规则中关联；事件插件继续提供事件。</p>
           </div>
 
           <div class="faq-item">
@@ -2229,8 +2166,8 @@ func main() {
           <table>
             <thead><tr><th>组件</th><th>当前版本</th><th>约束</th></tr></thead>
             <tbody>
-              <tr><td>GameSupport</td><td>0.4.x</td><td>插件系统的宿主。本文档按 0.4.x 的实际行为编写。</td></tr>
-              <tr><td>Plugin SDK</td><td>1.0</td><td>manifest 与原生插件运行模型。</td></tr>
+              <tr><td>GameSupport</td><td>0.11.0+</td><td>插件系统的宿主。本文档按 0.11.0+ 的实际行为编写。</td></tr>
+              <tr><td>Plugin SDK</td><td>1.1</td><td>兼容原事件插件，新增 ui.pages 与 web runtime；页面 API 1.0。</td></tr>
               <tr><td>GS-IPC</td><td>1.0</td><td>hello 与 initialize 中的 <code>protocol</code> 必须是 <code>gs-ipc/1.0</code>。</td></tr>
               <tr><td>manifest_version</td><td>1</td><td>固定值，不是插件版本。</td></tr>
               <tr><td>操作系统</td><td>Windows 10 / 11 x64</td><td>不支持 32 位、ARM 或 Linux。</td></tr>
@@ -2302,8 +2239,8 @@ func main() {
             <thead><tr><th>路径</th><th>内容</th></tr></thead>
             <tbody>
               <tr><td><code>sdk/examples/javascript-event-provider/</code></td><td>JavaScript 最简插件模板。</td></tr>
-              <tr><td><code>sdk/manifest.schema.json</code></td><td>Plugin SDK 1.0 清单 Schema。</td></tr>
-              <tr><td><code>docs/PLUGIN-SDK.md</code></td><td>SDK 1.0 的中文规范说明。</td></tr>
+              <tr><td><code>sdk/manifest.schema.json</code></td><td>Plugin SDK 1.1 清单 Schema。</td></tr>
+              <tr><td><code>docs/PLUGIN-SDK.md</code></td><td>SDK 1.1 的中文规范说明。</td></tr>
               <tr><td><code>docs/ARCHITECTURE.md</code></td><td>Host 模块边界、队列和进程模型。</td></tr>
               <tr><td><code>plugins/screen-kill-detector/</code></td><td>真实的 Go 识别插件，可参考完整协议实现。</td></tr>
               <tr><td><code>scripts/ipc-debug.ps1</code></td><td>本地协议调试工具，只用于受信任的开发包。</td></tr>
@@ -2315,7 +2252,7 @@ func main() {
           <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></svg></div>
           <div class="callout-body">
             <strong>文档版本</strong>
-            <p>本文档适用于 GameSupport 0.4.x 与 Plugin SDK 1.0，最后更新于 2026-11-23。字段约束以仓库中的 <code>manifest.schema.json</code> 和实际安装包行为为准。</p>
+            <p>本文档适用于 GameSupport 0.11.0+ 与 Plugin SDK 1.1，最后更新于 2026-11-27。字段约束以仓库中的 <code>manifest.schema.json</code> 和实际安装包行为为准。</p>
           </div>
         </div>
       </section>
@@ -2351,8 +2288,8 @@ func main() {
 <footer class="site-footer">
   <div class="footer-inner">
     <div>
-      <strong>GameSupport Plugin SDK 1.0</strong>
-      <p>面向外部开发者的插件开发文档。适用于 GameSupport 0.4.x，最后更新 2026-11-23。</p>
+      <strong>GameSupport Plugin SDK 1.1</strong>
+      <p>面向外部开发者的插件开发文档。适用于 GameSupport 0.11.0+，最后更新 2026-11-27。</p>
     </div>
     <div class="footer-links">
       <a href="https://github.com/shuo-huge/gamesupport-javascript-plugin" target="_blank" rel="noreferrer noopener">GitHub</a>
@@ -2723,3 +2660,4 @@ func main() {
 </script>
 </body>
 </html>
+

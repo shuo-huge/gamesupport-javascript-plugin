@@ -1,6 +1,6 @@
 # GameSupport JavaScript 简易插件开发文档
 
-本文仅以 JavaScript 简易插件为示例，说明构建、安装、事件发送及 GS-IPC 通信。插件只提供事件，音效与动画由主程序的触发规则统一执行。
+本文仅使用 JavaScript 示例。事件插件负责提供事件，音效与动画由触发中心规则统一执行。SDK 1.1 新增菜单和工具页面，纯 JavaScript 界面插件不需要独立进程，详见 [菜单与界面开发](PLUGIN-UI.md) 和 [动画编辑器模板](../sdk/examples/animation-editor/README.md)。下文为事件插件与 GS-IPC。
 
 ## 创建第一个插件
 
@@ -13,7 +13,7 @@ node sdk/examples/javascript-event-provider/build.mjs
 ./scripts/ipc-debug.ps1 -PluginDirectory ./build/javascript-example
 ```
 
-在插件中心安装 `build/javascript-example`，在配置页面授权 `events.emit` 并保存。点击启动，等待“运行中”。创建事件为 `example.pulse` 的规则，加入音效和动画并保存。在插件配置页点击“请求测试事件”。模板只在收到测试命令后发送示例事件，不会定时自动触发，也不需要开启本地 HTTP API。
+在插件中心安装 `build/javascript-example`，声明能力默认自动启用，无需额外勾选权限。点击启动，等待“运行中”。创建事件为 `example.pulse` 的规则，加入音效和动画并保存。在插件配置页点击“请求测试事件”。模板只在收到测试命令后发送示例事件，不会定时自动触发，也不需要开启本地 HTTP API。
 
 最终用户不需要 Go；发布包必须含独立 EXE 或完整运行时。构建脚本生成 SHA-256 清单。协议调试工具只用于受信任的本地开发包，会直接执行指定 EXE。
 
@@ -28,7 +28,7 @@ javascript-example/
   bin/node.exe
 ```
 
-完整 Schema 在 `sdk/manifest.schema.json`。`files` 是相对路径到小写 SHA-256 的映射，必须包含包内除 manifest 外的全部文件，包括 EXE 和运行时依赖。禁止绝对路径、`..`、NTFS 数据流、符号链接和目录联接。manifest 上限 128 KiB，安装包上限 512 MiB、最多 512 个目录项。ID 使用反向域名且唯一，版本按 SemVer 校验。首次安装不授予任何权限。启动前重新验证 manifest 和哈希。默认不自动启动。
+完整 Schema 在 `sdk/manifest.schema.json`。`files` 是相对路径到小写 SHA-256 的映射，必须包含包内除 manifest 外的全部文件，包括 EXE 和运行时依赖。禁止绝对路径、`..`、NTFS 数据流、符号链接和目录联接。manifest 上限 128 KiB，安装包上限 512 MiB、最多 512 个目录项。ID 使用反向域名且唯一，版本按 SemVer 校验。声明能力在安装时自动启用。启动前重新验证 manifest 和哈希。默认不自动启动。
 
 当前为本地开发安装通道；没有公共发布、恶意软件扫描服务、证书信任库或审核签名链。不能将此版本当作第三方公开 EXE 市场。Native 权限声明与授权记录是运行策略，无法约束 EXE 的 Windows 权限。Job Object 用于退出时清理进程树，不是沙箱。
 
@@ -62,7 +62,7 @@ Host 每 5 秒发 `{"type":"command","command":"ping","request_id":"heartbeat"}`
 
 ## 生命周期与数据
 
-已安装 → starting → running → stopping → stopped；异常进入 error。可从 stopped/error 再次启动。禁止重复启动。插件配置、授权与自动启动设置保存在 SQLite；包目录与用户资源分离。卸载会在 profiles 备份配置，不删除用户资源或规则；同 ID 重装会恢复配置，但清除授权。更新前必须停止，更新包必须同 ID 且版本更高；校验和暂存完成后替换目录，常规失败回滚。更新保留配置、清除授权并关闭自动启动，需要用户重新审核。尚无断电级事务恢复日志。
+已安装 → starting → running → stopping → stopped；异常进入 error。可从 stopped/error 再次启动。禁止重复启动。插件配置、自动启用的声明能力与可选自动启动设置保存在 SQLite；包目录与用户资源分离。卸载会在 profiles 备份配置，不删除用户资源或规则；同 ID 重装会恢复配置并自动启用声明能力。更新前必须停止，更新包必须同 ID 且版本更高；校验和暂存完成后替换目录，常规失败回滚。更新保留配置和自动启动选择，自动启用新清单声明的能力。事件仍须在清单中声明，完整性和 IPC 校验保持启用。尚无断电级事务恢复日志。
 
 ## 修改 JavaScript 逻辑
 
@@ -78,4 +78,4 @@ function emitPulse() {
 
 `running` 表示收到启动命令，`canEmit` 表示已授权事件发送。初始化配置位于 `message.config`。普通日志使用 `console.error()`；不要阻塞 JavaScript 事件循环，否则无法回复心跳。停止时清理自己创建的定时器和连接。
 
-新增事件时同步修改 `build.mjs` 中的 `events` 清单。修改 ID 或版本时，同步修改脚本 hello 与构建脚本 manifest。每次修改后重新构建以更新哈希。更新已安装包需提高版本、停止旧插件、通过插件中心更新并重新授权；不要直接编辑用户安装目录中的脚本以绕过完整性检查。
+新增事件时同步修改 `build.mjs` 中的 `events` 清单。修改 ID 或版本时，同步修改脚本 hello 与构建脚本 manifest。每次修改后重新构建以更新哈希。更新已安装包需提高版本、停止旧插件、通过插件中心更新；不要直接编辑用户安装目录中的脚本以绕过完整性检查。

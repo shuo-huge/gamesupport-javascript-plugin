@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "GameSupport Plugin SDK 1.0",
+  "title": "GameSupport Plugin SDK 1.1",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -17,31 +17,70 @@
     "files"
   ],
   "properties": {
-    "manifest_version": { "const": 1 },
+    "manifest_version": {
+      "const": 1
+    },
     "id": {
       "type": "string",
       "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9_-]*){2,}$",
       "maxLength": 160
     },
-    "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
     "version": {
       "type": "string",
       "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$"
     },
-    "author": { "type": "string", "minLength": 1 },
-    "description": { "type": "string", "maxLength": 2000 },
-    "type": { "const": "event_provider" },
+    "author": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "type": {
+      "enum": ["event_provider", "ui"]
+    },
     "runtime": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["type", "os", "arch", "executable", "protocol"],
-      "properties": {
-        "type": { "const": "native" },
-        "os": { "const": ["windows"] },
-        "arch": { "const": ["x86_64"] },
-        "executable": { "type": "string", "pattern": "^[A-Za-z0-9_./-]+\\.exe$" },
-        "protocol": { "const": "gs-ipc/1.0" }
-      }
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "os", "arch", "executable", "protocol"],
+          "properties": {
+            "type": {
+              "const": "native"
+            },
+            "os": {
+              "const": ["windows"]
+            },
+            "arch": {
+              "const": ["x86_64"]
+            },
+            "executable": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_./-]+\\.exe$"
+            },
+            "protocol": {
+              "const": "gs-ipc/1.0"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "const": "web"
+            }
+          }
+        }
+      ]
     },
     "permissions": {
       "type": "array",
@@ -70,7 +109,11 @@
             "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$",
             "maxLength": 128
           },
-          "name": { "type": "string", "minLength": 1, "maxLength": 100 }
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
         }
       }
     },
@@ -78,7 +121,87 @@
       "type": "object",
       "minProperties": 1,
       "maxProperties": 256,
-      "additionalProperties": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      }
+    },
+    "ui": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pages"],
+      "properties": {
+        "pages": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "title", "html", "script"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_-]{0,39}$"
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              },
+              "html": {
+                "type": "string",
+                "maxLength": 160
+              },
+              "script": {
+                "type": "string",
+                "maxLength": 160
+              },
+              "style": {
+                "type": "string",
+                "maxLength": 160
+              }
+            }
+          }
+        }
+      }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "ui"
+          }
+        }
+      },
+      "then": {
+        "required": ["ui"],
+        "properties": {
+          "runtime": {
+            "properties": {
+              "type": {
+                "const": "web"
+              }
+            }
+          },
+          "events": {
+            "maxItems": 0
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "runtime": {
+            "properties": {
+              "type": {
+                "const": "native"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

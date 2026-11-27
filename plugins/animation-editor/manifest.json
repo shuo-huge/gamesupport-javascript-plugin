@@ -1,0 +1,31 @@
+{
+  "manifest_version": 1,
+  "id": "com.gamesupport.animation-editor",
+  "name": "动画编辑器 · JavaScript 示例",
+  "version": "1.0.0",
+  "author": "GameSupport",
+  "description": "纯 JavaScript 插件页面示例：编辑、预览、保存工程并导出 GIF 到动画库。",
+  "type": "ui",
+  "runtime": {
+    "type": "web"
+  },
+  "permissions": [],
+  "events": [],
+  "ui": {
+    "pages": [
+      {
+        "id": "editor",
+        "title": "动画编辑器",
+        "html": "page.html",
+        "script": "page.js",
+        "style": "page.css"
+      }
+    ]
+  },
+  "files": {
+    "page.html": "ab5291728e36a95d243d68de476106e023550c10192006e0bfd377bcdf1abd9b",
+    "page.js": "d12538734e7cd66c670fc4700f8bae41c658b4cb4d2aa913e568a5d600e6308a",
+    "page.css": "1efb63398cfff371be81b830b59226228ab9eaf738e6df9077e9d783ac325d0e",
+    "README.md": "78f5cbd8fc74e3e99c1d29ff6a5317ee58b0eebc7fa7692f59e8088c7f47abce"
+  }
+}
